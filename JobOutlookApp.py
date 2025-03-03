@@ -4,7 +4,6 @@ import pandas as pd
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import plotly.express as px
-import json
 
 # TODO: [DONE] Have df_region_filtered be filtered by the user's input
 # TODO: [DONE] Have search for economic region be a dropdown menu
@@ -12,11 +11,11 @@ import json
 # TODO: [DONE] Fix the sorting for the french version, it is not sorting properly since it uses french words for the NOC Titles 
 # TODO: [DONE] Have search Functionality for specific NOC Titles or names within the Titles (eg if I search teachers, I want all the NOC Titles with teachers in it)
 # TODO: [DONE] Optimize the search functionality and the app in general. It is slow to load and search since it has to reload the entire DataFrame each time
+# TODO: Properly site the goverment of canada website where the data is from in the app and in the repository
 # TODO: Make it look prettier
-# TODO: Make standalone app for for user download or host it on a website somewhere? ideally for free for me
+# TODO: Make web app that I can host online for the download or host it on a website somewhere? ideally for free for me
 # TODO: Add a map of Canada with the economic regions and their outlooks
 # TODO: Add some kind of chart of the outlooks for the selected region 
-
 
 # File paths for English and French Excel files
 file_paths = {
@@ -35,10 +34,6 @@ data_frames = {
     'English': pd.read_excel(file_paths['English'], sheet_name=0),
     'French': pd.read_excel(file_paths['French'], sheet_name=0)
 }
-
-# Load the GeoJSON file for the economic regions in Canada
-with open('./data/canada_economic_regions.geojson') as f:
-    geojson = json.load(f)
 
 # Get unique economic regions for the dropdown options
 economic_regions = data_frames['English']['Economic Region Name'].unique()
@@ -90,8 +85,11 @@ app.layout = html.Div([
     # Div to display the detailed information of the selected row
     html.Div(id='row-details', style={'margin-top': '20px'}),
     
-    # Div to display the map
-    dcc.Graph(id='map')
+    # Footer with data source information
+    html.Footer([
+        html.P("Data sourced and provided by the Government of Canada."),
+        html.A("Visit the website", href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank")
+    ], style={'text-align': 'center', 'margin-top': '20px'})
 ])
 
 # Callback to update the DataTable based on the selected language, region, and search input
@@ -100,7 +98,6 @@ app.layout = html.Div([
     Output('datatable', 'columns'),
     Output('region-dropdown', 'options'),
     Output('region-dropdown', 'value'),
-    Output('map', 'figure'),
     Input('language-dropdown', 'value'),
     Input('region-dropdown', 'value'),
     Input('search-input', 'value')
@@ -137,31 +134,7 @@ def update_table(selected_language, selected_region, search_value):
     # Update the DataTable columns based on the selected language
     columns = [{'name': col, 'id': col} for col in df.columns if col != 'Employment Trends']
     
-    # Create the choropleth map
-    fig = px.choropleth(
-        df,
-        geojson=geojson,
-        locations='Economic Region Name',
-        featureidkey='properties.Economic Region Name',
-        color='Outlook',
-        color_discrete_map={
-            'very good': 'green',
-            'good': 'lightgreen',
-            'fair': 'yellow',
-            'limited': 'orange',
-            'undetermined': 'red',
-            'très bonnes': 'green',
-            'bonnes': 'lightgreen',
-            'modérées': 'yellow',
-            'limitées': 'orange',
-            'très limitées': 'red',
-            'indéterminées': 'grey'
-        },
-        title='Economic Region Outlooks in Canada'
-    )
-    fig.update_geos(fitbounds="locations", visible=False)
-    
-    return df_sorted_by_outlook.to_dict('records'), columns, region_options, selected_region, fig
+    return df_sorted_by_outlook.to_dict('records'), columns, region_options, selected_region
 
 # Callback to update the selected row data
 @app.callback(
