@@ -10,6 +10,7 @@ import plotly.express as px
 # TODO: [DONE] Have the user input the file path for english or french
 # TODO: [DONE] Fix the sorting for the french version, it is not sorting properly since it uses french words for the NOC Titles 
 # TODO: [DONE] Have search Functionality for specific NOC Titles or names within the Titles (eg if I search teachers, I want all the NOC Titles with teachers in it)
+# TODO: Optimize the search functionality and the app in general. It is slow to load and search since it has to reload the entire DataFrame each time
 # TODO: Make it look prettier
 # TODO: Make standalone app for for user download or host it on a website somewhere? ideally for free for me
 # TODO: Add a map of Canada with the economic regions and their outlooks
@@ -27,15 +28,14 @@ outlook_orders = {
     'French': ['très bonnes', 'bonnes', 'modérées', 'indéterminées', 'limitées', 'très limitées']
 }
 
-# Load the initial Excel file (default to English)
-xls = pd.ExcelFile(file_paths['English'])
-
-# Load sheet into DataFrame
-display_name = xls.sheet_names[0]
-df = pd.read_excel(xls, sheet_name=display_name)
+# Load the initial Excel files and store them in a global variable
+data_frames = {
+    'English': pd.read_excel(file_paths['English'], sheet_name=0),
+    'French': pd.read_excel(file_paths['French'], sheet_name=0)
+}
 
 # Get unique economic regions for the dropdown options
-economic_regions = df['Economic Region Name'].unique()
+economic_regions = data_frames['English']['Economic Region Name'].unique()
 
 # Simple Dash app to display the DataFrame
 app = dash.Dash(__name__)
@@ -69,8 +69,8 @@ app.layout = html.Div([
     # DataTable to display the DataFrame
     dash_table.DataTable(
         id='datatable',
-        columns=[{'name': col, 'id': col} for col in df.columns if col != 'Employment Trends'],
-        data=df.to_dict('records'),  # Initial data
+        columns=[{'name': col, 'id': col} for col in data_frames['English'].columns if col != 'Employment Trends'],
+        data=data_frames['English'].to_dict('records'),  # Initial data
         style_table={'height': '400px', 'overflowY': 'auto'},
         style_cell={'textAlign': 'center', 'padding': '10px'},
         style_header={'backgroundColor': 'lightgrey', 'fontWeight': 'bold'},
@@ -96,9 +96,8 @@ app.layout = html.Div([
     Input('search-input', 'value')
 )
 def update_table(selected_language, selected_region, search_value):
-    # Load the appropriate Excel file based on the selected language
-    xls = pd.ExcelFile(file_paths[selected_language])
-    df = pd.read_excel(xls, sheet_name=xls.sheet_names[0])
+    # Get the preloaded DataFrame based on the selected language
+    df = data_frames[selected_language]
     
     # Get unique economic regions for the dropdown options
     economic_regions = df['Economic Region Name'].unique()
