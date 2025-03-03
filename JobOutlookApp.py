@@ -29,7 +29,7 @@ column_mappings = {
     },
     'French': {
         'Economic Region Name': 'Nom de la région économique',
-        'Outlook': 'Perspectives',
+        'Outlook': 'Outlook',
         'Employment Trends': 'Tendances de l\'emploi',
         # Add other column mappings as needed
     }
