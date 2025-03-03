@@ -39,6 +39,10 @@ data_frames = {
 # Get unique economic regions for the dropdown options
 economic_regions = data_frames['English']['Economic Region Name'].unique()
 
+# Add "All Regions" option to the dropdown
+all_regions_option = [{'label': 'All Regions', 'value': 'All Regions'}]
+region_options = all_regions_option + [{'label': region, 'value': region} for region in economic_regions]
+
 # Simple Dash app to display the DataFrame
 app = dash.Dash(__name__)
 app.layout = html.Div([
@@ -55,8 +59,8 @@ app.layout = html.Div([
     # Dropdown menu for selecting economic region
     dcc.Dropdown(
         id='region-dropdown',
-        options=[{'label': region, 'value': region} for region in economic_regions],
-        value=economic_regions[0],  # Default value
+        options=region_options,
+        value='All Regions',  # Default value
         style={'width': '50%', 'margin': 'auto'}
     ),
     
@@ -111,14 +115,17 @@ def update_table(selected_language, selected_region, search_value):
     economic_regions = df['Economic Region Name'].unique()
     
     # Update the region dropdown options
-    region_options = [{'label': region, 'value': region} for region in economic_regions]
+    region_options = all_regions_option + [{'label': region, 'value': region} for region in economic_regions]
     
-    # If the selected region is not in the new options, default to the first region
-    if selected_region not in economic_regions:
-        selected_region = economic_regions[0]
+    # If the selected region is not in the new options, default to "All Regions"
+    if selected_region not in economic_regions and selected_region != 'All Regions':
+        selected_region = 'All Regions'
     
     # Filter the DataFrame based on the selected region
-    df_region_filtered = df.loc[df['Economic Region Name'] == selected_region]
+    if selected_region != 'All Regions':
+        df_region_filtered = df.loc[df['Economic Region Name'] == selected_region]
+    else:
+        df_region_filtered = df
     
     # Filter the DataFrame based on the search input
     if search_value:
