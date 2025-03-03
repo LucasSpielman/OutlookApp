@@ -8,6 +8,7 @@ import plotly.express as px
 # TODO: [DONE] Have df_region_filtered be filtered by the user's input
 # TODO: [DONE] Have search for economic region be a dropdown menu
 # TODO: Have the user input the file path for english or french
+# TODO: Fix the sorting for the french version, it is not sorting properly since it uses french words for the NOC Titles 
 # TODO: Have search Functionality for specific NOC Titles
 # TODO: Make it look prettier
 # TODO: Make standalone app for for user download
@@ -71,21 +72,13 @@ app.layout = html.Div([
     # DataTable to display the DataFrame
     dash_table.DataTable(
         id='datatable',
-        columns=[{'name': col, 'id': col} for col in df.columns],
+        columns=[{'name': col, 'id': col} for col in df.columns if col != 'Employment Trends'],
         data=df.to_dict('records'),  # Initial data
         style_table={'height': '400px', 'overflowY': 'auto'},
         style_cell={'textAlign': 'center', 'padding': '10px'},
         style_header={'backgroundColor': 'lightgrey', 'fontWeight': 'bold'},
         row_selectable='single',
         selected_rows=[],
-        style_cell_conditional=[
-            {
-                'if': {'column_id': 'Employment Trends'},
-                'whiteSpace': 'normal',
-                'height': 'auto',
-                'maxWidth': '200px',
-            }
-        ],
     ),
     
     # Store to hold the selected row data
@@ -129,7 +122,7 @@ def update_table(selected_language, selected_region):
     df_sorted_by_outlook = df_region_filtered.sort_values(column_mappings[selected_language]['Outlook'])
     
     # Update the DataTable columns based on the selected language
-    columns = [{'name': col, 'id': col} for col in df.columns]
+    columns = [{'name': col, 'id': col} for col in df.columns if col != 'Employment Trends']
     
     return df_sorted_by_outlook.to_dict('records'), columns, region_options, selected_region
 
