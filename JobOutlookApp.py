@@ -7,11 +7,13 @@ import plotly.express as px
 
 # TODO: [DONE] Have df_region_filtered be filtered by the user's input
 # TODO: [DONE] Have search for economic region be a dropdown menu
-# TODO: Have the user input the file path for english or french
-# TODO: Fix the sorting for the french version, it is not sorting properly since it uses french words for the NOC Titles 
-# TODO: Have search Functionality for specific NOC Titles
+# TODO: [DONE] Have the user input the file path for english or french
+# TODO: [DONE] Fix the sorting for the french version, it is not sorting properly since it uses french words for the NOC Titles 
+# TODO: [DONE] Have search Functionality for specific NOC Titles or names within the Titles (eg if I search teachers, I want all the NOC Titles with teachers in it)
 # TODO: Make it look prettier
-# TODO: Make standalone app for for user download
+# TODO: Make standalone app for for user download or host it on a website somewhere? ideally for free for me
+# TODO: Add a map of Canada with the economic regions and their outlooks
+# TODO: Add some kind of chart of the outlooks for the selected region 
 
 # File paths for English and French Excel files
 file_paths = {
@@ -56,6 +58,14 @@ app.layout = html.Div([
         style={'width': '50%', 'margin': 'auto'}
     ),
     
+    # Input field for searching NOC Titles
+    dcc.Input(
+        id='search-input',
+        type='text',
+        placeholder='Search NOC Titles...',
+        style={'width': '50%', 'margin': 'auto', 'margin-top': '20px'}
+    ),
+    
     # DataTable to display the DataFrame
     dash_table.DataTable(
         id='datatable',
@@ -75,16 +85,17 @@ app.layout = html.Div([
     html.Div(id='row-details', style={'margin-top': '20px'})
 ])
 
-# Callback to update the DataTable based on the selected language and region
+# Callback to update the DataTable based on the selected language, region, and search input
 @app.callback(
     Output('datatable', 'data'),
     Output('datatable', 'columns'),
     Output('region-dropdown', 'options'),
     Output('region-dropdown', 'value'),
     Input('language-dropdown', 'value'),
-    Input('region-dropdown', 'value')
+    Input('region-dropdown', 'value'),
+    Input('search-input', 'value')
 )
-def update_table(selected_language, selected_region):
+def update_table(selected_language, selected_region, search_value):
     # Load the appropriate Excel file based on the selected language
     xls = pd.ExcelFile(file_paths[selected_language])
     df = pd.read_excel(xls, sheet_name=xls.sheet_names[0])
@@ -99,8 +110,14 @@ def update_table(selected_language, selected_region):
     if selected_region not in economic_regions:
         selected_region = economic_regions[0]
     
-    # Filter and sort the DataFrame based on the selected region
+    # Filter the DataFrame based on the selected region
     df_region_filtered = df.loc[df['Economic Region Name'] == selected_region]
+    
+    # Filter the DataFrame based on the search input
+    if search_value:
+        df_region_filtered = df_region_filtered[df_region_filtered['NOC Title'].str.contains(search_value, case=False, na=False)]
+    
+    # Sort the DataFrame based on the outlook order
     df_region_filtered['Outlook'] = pd.Categorical(
         df_region_filtered['Outlook'], 
         categories=outlook_orders[selected_language], 
