@@ -11,7 +11,6 @@ import plotly.express as px
 # TODO: Make it look prettier
 # TODO: Make standalone app for for user download
 
-
 # Load the Excel file
 file_path = "./data/20242026_outlook_n21_en_250117.xlsx"
 xls = pd.ExcelFile(file_path)
@@ -20,11 +19,11 @@ xls = pd.ExcelFile(file_path)
 display_name = xls.sheet_names[0]
 df = pd.read_excel(xls, sheet_name=display_name)
 
-# Outlook 
+# Outlook paramaters for sorting. "Very good" is the best outlook, "undetermined" is the worst.
 outlook_order = ['very good', 'good', 'fair', 'limited', 'undetermined']
 
 # Filter the dataframe by Economic Region
-economic_region_filter = 'British Columbia'  # Replace with the desired economic region
+economic_region_filter = 'British Columbia'  # Replace with the desired economic region, we want to have the user input this
 
 # Use .loc to filter the DataFrame by the Economic Region
 df_region_filtered = df.loc[df['Economic Region Name'] == economic_region_filter]
@@ -35,10 +34,8 @@ df_region_filtered['Outlook'] = pd.Categorical(df_region_filtered['Outlook'], ca
 # Now sort by 'Outlook' in the defined order
 df_sorted_by_outlook = df_region_filtered.sort_values('Outlook')
 
-# Start the Dash app
+# simple dash app to display the DataFrame
 app = dash.Dash(__name__)
-
-# Layout of the app
 app.layout = html.Div([
     html.H1("Economic Region Outlook Data for {economic_region_filter}", style={'text-align': 'center'}),
     
@@ -55,6 +52,5 @@ app.layout = html.Div([
     )
 ])
 
-# Run the Dash app
 if __name__ == '__main__':
     app.run_server(debug=True)
