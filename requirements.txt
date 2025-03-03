@@ -3,3 +3,4 @@ dash-bootstrap-components
 pandas
 plotly
 beautifulsoup4
+openpyxl
