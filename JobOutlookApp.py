@@ -19,7 +19,6 @@ from bs4 import BeautifulSoup
 # TODO: Add some kind of chart of the outlooks for the selected region 
 
 # File paths for English and French Excel files
-# File paths for English and French Excel files
 file_paths = {
     'English': "./data/20242026_outlook_n21_en_250117.xlsx",
     'French': "./data/20242026_outlook_n21_fr_250117.xlsx"
@@ -72,7 +71,7 @@ app.layout = html.Div([
     # DataTable to display the DataFrame
     dash_table.DataTable(
         id='datatable',
-        columns=[{'name': col, 'id': col} for col in data_frames['English'].columns if col != 'Employment Trends'],
+        columns=[{'name': col, 'id': col} for col in data_frames['English'].columns if col not in ['NOC_Code', 'Economic Region Code', 'Economic Region Name', 'LANG', 'Employment Trends']],
         data=data_frames['English'].to_dict('records'),  # Initial data
         style_table={'height': '400px', 'overflowY': 'auto'},
         style_cell={'textAlign': 'center', 'padding': '10px'},
@@ -134,7 +133,7 @@ def update_table(selected_language, selected_region, search_value):
     df_sorted_by_outlook = df_region_filtered.sort_values('Outlook')
     
     # Update the DataTable columns based on the selected language
-    columns = [{'name': col, 'id': col} for col in df.columns if col != 'Employment Trends']
+    columns = [{'name': col, 'id': col} for col in df.columns if col not in ['NOC_Code', 'Economic Region Code', 'Economic Region Name', 'LANG', 'Employment Trends']]
     
     return df_sorted_by_outlook.to_dict('records'), columns, region_options, selected_region
 
