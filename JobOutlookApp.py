@@ -18,6 +18,22 @@ file_paths = {
     'French': "./data/20242026_outlook_n21_fr_250117.xlsx"
 }
 
+# Column name mappings for English and French
+column_mappings = {
+    'English': {
+        'Economic Region Name': 'Economic Region Name',
+        'Outlook': 'Outlook',
+        'Employment Trends': 'Employment Trends',
+        # Add other column mappings as needed
+    },
+    'French': {
+        'Economic Region Name': 'Nom de la région économique',
+        'Outlook': 'Perspectives',
+        'Employment Trends': 'Tendances de l\'emploi',
+        # Add other column mappings as needed
+    }
+}
+
 # Load the initial Excel file (default to English)
 xls = pd.ExcelFile(file_paths['English'])
 
@@ -29,7 +45,7 @@ df = pd.read_excel(xls, sheet_name=display_name)
 outlook_order = ['very good', 'good', 'fair', 'limited', 'undetermined']
 
 # Get unique economic regions for the dropdown options
-economic_regions = df['Economic Region Name'].unique()
+economic_regions = df[column_mappings['English']['Economic Region Name']].unique()
 
 # Simple Dash app to display the DataFrame
 app = dash.Dash(__name__)
@@ -56,15 +72,33 @@ app.layout = html.Div([
     dash_table.DataTable(
         id='datatable',
         columns=[{'name': col, 'id': col} for col in df.columns],
+        data=df.to_dict('records'),  # Initial data
         style_table={'height': '400px', 'overflowY': 'auto'},
         style_cell={'textAlign': 'center', 'padding': '10px'},
         style_header={'backgroundColor': 'lightgrey', 'fontWeight': 'bold'},
-    )
+        row_selectable='single',
+        selected_rows=[],
+        style_cell_conditional=[
+            {
+                'if': {'column_id': 'Employment Trends'},
+                'whiteSpace': 'normal',
+                'height': 'auto',
+                'maxWidth': '200px',
+            }
+        ],
+    ),
+    
+    # Store to hold the selected row data
+    dcc.Store(id='selected-row-data'),
+    
+    # Div to display the detailed information of the selected row
+    html.Div(id='row-details', style={'margin-top': '20px'})
 ])
 
 # Callback to update the DataTable based on the selected language and region
 @app.callback(
     Output('datatable', 'data'),
+    Output('datatable', 'columns'),
     Output('region-dropdown', 'options'),
     Output('region-dropdown', 'value'),
     Input('language-dropdown', 'value'),
@@ -76,7 +110,7 @@ def update_table(selected_language, selected_region):
     df = pd.read_excel(xls, sheet_name=xls.sheet_names[0])
     
     # Get unique economic regions for the dropdown options
-    economic_regions = df['Economic Region Name'].unique()
+    economic_regions = df[column_mappings[selected_language]['Economic Region Name']].unique()
     
     # Update the region dropdown options
     region_options = [{'label': region, 'value': region} for region in economic_regions]
@@ -86,11 +120,44 @@ def update_table(selected_language, selected_region):
         selected_region = economic_regions[0]
     
     # Filter and sort the DataFrame based on the selected region
-    df_region_filtered = df.loc[df['Economic Region Name'] == selected_region]
-    df_region_filtered['Outlook'] = pd.Categorical(df_region_filtered['Outlook'], categories=outlook_order, ordered=True)
-    df_sorted_by_outlook = df_region_filtered.sort_values('Outlook')
+    df_region_filtered = df.loc[df[column_mappings[selected_language]['Economic Region Name']] == selected_region]
+    df_region_filtered[column_mappings[selected_language]['Outlook']] = pd.Categorical(
+        df_region_filtered[column_mappings[selected_language]['Outlook']], 
+        categories=outlook_order, 
+        ordered=True
+    )
+    df_sorted_by_outlook = df_region_filtered.sort_values(column_mappings[selected_language]['Outlook'])
     
-    return df_sorted_by_outlook.to_dict('records'), region_options, selected_region
+    # Update the DataTable columns based on the selected language
+    columns = [{'name': col, 'id': col} for col in df.columns]
+    
+    return df_sorted_by_outlook.to_dict('records'), columns, region_options, selected_region
+
+# Callback to update the selected row data
+@app.callback(
+    Output('selected-row-data', 'data'),
+    Input('datatable', 'selected_rows'),
+    Input('datatable', 'data')
+)
+def update_selected_row_data(selected_rows, data):
+    if selected_rows:
+        return data[selected_rows[0]]
+    return {}
+
+# Callback to display the detailed information of the selected row
+@app.callback(
+    Output('row-details', 'children'),
+    Input('selected-row-data', 'data')
+)
+def display_row_details(row_data):
+    if row_data:
+        return html.Div([
+            html.H3("Detailed Information"),
+            html.P(f"Economic Region Name: {row_data.get('Economic Region Name', '')}"),
+            html.P(f"Outlook: {row_data.get('Outlook', '')}"),
+            html.P(f"Employment Trends: {row_data.get('Employment Trends', '')}")
+        ])
+    return html.Div()
 
 if __name__ == '__main__':
     app.run_server(debug=True)
