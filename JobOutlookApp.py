@@ -4,6 +4,7 @@ import pandas as pd
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import plotly.express as px
+from bs4 import BeautifulSoup
 
 # TODO: [DONE] Have df_region_filtered be filtered by the user's input
 # TODO: [DONE] Have search for economic region be a dropdown menu
@@ -11,12 +12,13 @@ import plotly.express as px
 # TODO: [DONE] Fix the sorting for the french version, it is not sorting properly since it uses french words for the NOC Titles 
 # TODO: [DONE] Have search Functionality for specific NOC Titles or names within the Titles (eg if I search teachers, I want all the NOC Titles with teachers in it)
 # TODO: [DONE] Optimize the search functionality and the app in general. It is slow to load and search since it has to reload the entire DataFrame each time
-# TODO: Properly site the goverment of canada website where the data is from in the app and in the repository
+# TODO: [DONE] Properly site the goverment of canada website where the data is from in the app and in the repository
 # TODO: Make it look prettier
 # TODO: Make web app that I can host online for the download or host it on a website somewhere? ideally for free for me
 # TODO: Add a map of Canada with the economic regions and their outlooks
 # TODO: Add some kind of chart of the outlooks for the selected region 
 
+# File paths for English and French Excel files
 # File paths for English and French Excel files
 file_paths = {
     'English': "./data/20242026_outlook_n21_en_250117.xlsx",
@@ -147,6 +149,17 @@ def update_selected_row_data(selected_rows, data):
         return data[selected_rows[0]]
     return {}
 
+# Helper function to parse HTML content and convert it to Dash HTML components
+def parse_html_content(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    children = []
+    for element in soup.children:
+        if element.name == 'p':
+            children.append(html.P(element.text))
+        elif element.name == 'ul':
+            children.append(html.Ul([html.Li(li.text) for li in element.find_all('li')]))
+    return children
+
 # Callback to display the detailed information of the selected row
 @app.callback(
     Output('row-details', 'children'),
@@ -154,11 +167,12 @@ def update_selected_row_data(selected_rows, data):
 )
 def display_row_details(row_data):
     if row_data:
+        employment_trends = row_data.get('Employment Trends', '')
         return html.Div([
             html.H3("Detailed Information"),
             html.P(f"Economic Region Name: {row_data.get('Economic Region Name', '')}"),
             html.P(f"Outlook: {row_data.get('Outlook', '')}"),
-            html.P(f"Employment Trends: {row_data.get('Employment Trends', '')}")
+            html.Div(parse_html_content(employment_trends))
         ])
     return html.Div()
 
