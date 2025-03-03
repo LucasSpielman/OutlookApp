@@ -1,6 +1,6 @@
 # Economic Region Outlook Data App
 
-This is a Dash web application that displays economic region outlook data for Canada. The app allows users to select a language (English or French), choose an economic region, and search for specific NOC Titles. It also includes a detailed view of employment trends for the selected NOC Title.
+This is a Dash web application that displays economic region outlook data for Canada. I found the official government page pretty difficult to parse as there aren't really any filtering features. The app lets you select a language (English or French), choose an specific city or economic region, and search for specific NOC Titles (job titles). It also includes a detailed view of employment trends for the selected NOC Title.
 
 ## Features
 - Select language (English or French)
@@ -13,7 +13,7 @@ This is a Dash web application that displays economic region outlook data for Ca
 
 1. Clone the repository:
 
-```sh
+```bash
 git clone https://github.com/yourusername/economic-region-outlook-app.git
 cd economic-region-outlook-app
 ```
@@ -31,7 +31,6 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-1. Run the app:
 ```bash
 python JobOutlookApp.py
 ```
@@ -39,7 +38,7 @@ python JobOutlookApp.py
 ## Data
 The data used in this app is sourced and provided by the Government of Canada. You can visit their website for more information:
 
-Government of Canada - National Occupational Classification (NOC)
+Government of Canada - National Occupational Classification (NOC) - https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1
 
 ## Screenshots
 
