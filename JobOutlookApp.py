@@ -36,8 +36,8 @@ data_frames = {
     'French': pd.read_excel(file_paths['French'], sheet_name=0)
 }
 
-# Get unique economic regions for the dropdown options
-economic_regions = data_frames['English']['Economic Region Name'].unique()
+# Get unique economic regions for the dropdown options and sort them alphabetically
+economic_regions = sorted(data_frames['English']['Economic Region Name'].unique())
 
 # Add "All Regions" option to the dropdown
 all_regions_option = [{'label': 'All Regions', 'value': 'All Regions'}]
@@ -111,8 +111,8 @@ def update_table(selected_language, selected_region, search_value):
     # Get the preloaded DataFrame based on the selected language
     df = data_frames[selected_language]
     
-    # Get unique economic regions for the dropdown options
-    economic_regions = df['Economic Region Name'].unique()
+    # Get unique economic regions for the dropdown options and sort them alphabetically
+    economic_regions = sorted(df['Economic Region Name'].unique())
     
     # Update the region dropdown options
     region_options = all_regions_option + [{'label': region, 'value': region} for region in economic_regions]
