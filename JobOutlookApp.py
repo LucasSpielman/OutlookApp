@@ -19,20 +19,10 @@ file_paths = {
     'French': "./data/20242026_outlook_n21_fr_250117.xlsx"
 }
 
-# Column name mappings for English and French
-column_mappings = {
-    'English': {
-        'Economic Region Name': 'Economic Region Name',
-        'Outlook': 'Outlook',
-        'Employment Trends': 'Employment Trends',
-        # Add other column mappings as needed
-    },
-    'French': {
-        'Economic Region Name': 'Nom de la région économique',
-        'Outlook': 'Outlook',
-        'Employment Trends': 'Tendances de l\'emploi',
-        # Add other column mappings as needed
-    }
+# Outlook order mappings for English and French
+outlook_orders = {
+    'English': ['very good', 'good', 'fair', 'limited', 'undetermined'],
+    'French': ['très bonnes', 'bonnes', 'modérées', 'indéterminées', 'limitées', 'très limitées']
 }
 
 # Load the initial Excel file (default to English)
@@ -42,11 +32,8 @@ xls = pd.ExcelFile(file_paths['English'])
 display_name = xls.sheet_names[0]
 df = pd.read_excel(xls, sheet_name=display_name)
 
-# Outlook parameters for sorting. "Very good" is the best outlook, "undetermined" is the worst.
-outlook_order = ['very good', 'good', 'fair', 'limited', 'undetermined']
-
 # Get unique economic regions for the dropdown options
-economic_regions = df[column_mappings['English']['Economic Region Name']].unique()
+economic_regions = df['Economic Region Name'].unique()
 
 # Simple Dash app to display the DataFrame
 app = dash.Dash(__name__)
@@ -103,7 +90,7 @@ def update_table(selected_language, selected_region):
     df = pd.read_excel(xls, sheet_name=xls.sheet_names[0])
     
     # Get unique economic regions for the dropdown options
-    economic_regions = df[column_mappings[selected_language]['Economic Region Name']].unique()
+    economic_regions = df['Economic Region Name'].unique()
     
     # Update the region dropdown options
     region_options = [{'label': region, 'value': region} for region in economic_regions]
@@ -113,13 +100,13 @@ def update_table(selected_language, selected_region):
         selected_region = economic_regions[0]
     
     # Filter and sort the DataFrame based on the selected region
-    df_region_filtered = df.loc[df[column_mappings[selected_language]['Economic Region Name']] == selected_region]
-    df_region_filtered[column_mappings[selected_language]['Outlook']] = pd.Categorical(
-        df_region_filtered[column_mappings[selected_language]['Outlook']], 
-        categories=outlook_order, 
+    df_region_filtered = df.loc[df['Economic Region Name'] == selected_region]
+    df_region_filtered['Outlook'] = pd.Categorical(
+        df_region_filtered['Outlook'], 
+        categories=outlook_orders[selected_language], 
         ordered=True
     )
-    df_sorted_by_outlook = df_region_filtered.sort_values(column_mappings[selected_language]['Outlook'])
+    df_sorted_by_outlook = df_region_filtered.sort_values('Outlook')
     
     # Update the DataTable columns based on the selected language
     columns = [{'name': col, 'id': col} for col in df.columns if col != 'Employment Trends']
