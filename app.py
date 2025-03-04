@@ -71,7 +71,7 @@ app.layout = html.Div([
             clearable=False
         ),
         html.Button('Go to Job Outlook Table', id='job-outlook-button', n_clicks=0)
-    ], style={"position": "absolute", "bottom": "10px", "right": "10px", "width": "200px"})
+    ], style={"position": "absolute", "top": "10px", "right": "10px", "width": "200px"})
 ], style={"width": "100vw", "height": "100vh", "margin": "0", "padding": "0"})
 
 # Combined callback to update the dropdown options and plots based on language selection and NOC Titles
