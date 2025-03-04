@@ -23,13 +23,12 @@ def load_data(language):
             'undetermined': 'red'
         }
     else:  # French
-        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'très limitées', 'indéterminées']
+        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées']
         outlook_colors = {
             'très bonnes': 'green',
             'bonnes': 'blue',
             'modérées': 'yellow',
             'limitées': 'orange',
-            'très limitées': 'purple',
             'indéterminées': 'red'
         }
     df['Outlook'] = pd.Categorical(df['Outlook'], categories=outlook_order, ordered=True)
@@ -60,7 +59,7 @@ app.layout = html.Div([
         clearable=False
     ),
     dcc.Graph(id='map-plot', style={"width": "100vw", "height": "45vh"}),
-    dcc.Graph(id='scatter-plot', style={"width": "100vw", "height": "45vh"}),
+    dcc.Graph(id='scatter-plot', style={"width": "100vw", "height": "45vh"}),  # Adjust the height of the scatter plot
     html.Div([
         dcc.Dropdown(
             id='language-dropdown',
@@ -70,7 +69,8 @@ app.layout = html.Div([
             ],
             value='English',  # Default value
             clearable=False
-        )
+        ),
+        html.Button('Go to Job Outlook Table', id='job-outlook-button', n_clicks=0)
     ], style={"position": "absolute", "bottom": "10px", "right": "10px", "width": "200px"})
 ], style={"width": "100vw", "height": "100vh", "margin": "0", "padding": "0"})
 
@@ -117,7 +117,10 @@ def update_content(language, selected_nocs):
     scatter_fig = px.scatter(
         filtered_df, x='Economic Region Name', y='NOC Title', color='Outlook',
         category_orders={'Outlook': outlook_order},
-        color_discrete_map=outlook_colors
+        color_discrete_map=outlook_colors,
+        title='Scatter Plot of Economic Regions vs NOC Titles',
+        labels={'Economic Region Name': 'Economic Region', 'NOC Title': 'NOC Title'},
+        opacity=0.7
     )
     scatter_fig.update_layout(
         showlegend=True,  # Show legend for the scatter plot
@@ -127,7 +130,9 @@ def update_content(language, selected_nocs):
             y=0,
             xanchor="left",
             x=0
-        )
+        ),
+        xaxis=dict(showgrid=True),
+        yaxis=dict(showgrid=True)
     )
     
     return options, selected_nocs, map_fig, scatter_fig
