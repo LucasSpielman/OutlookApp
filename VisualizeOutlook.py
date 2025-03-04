@@ -17,7 +17,7 @@ outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined']
 outlook_colors = {
     'very good': 'green',
     'good': 'blue',
-    'fair': 'yellow',
+    'moderate': 'yellow',
     'limited': 'orange',
     'undetermined': 'red'
 }
@@ -46,7 +46,7 @@ app.layout = html.Div([
     Input('noc-dropdown', 'value')
 )
 def update_scatter(selected_noc):
-    filtered_df = sorted_df[sorted_df['NOC Title'] == selected_noc]
+    filtered_df = sorted_df[sorted_df['NOC Title'] == selected_noc].sort_values(by='Outlook')
     
     fig = px.scatter(
         filtered_df, x='Economic Region Name', y='NOC Title', color='Outlook',
