@@ -58,8 +58,8 @@ app.layout = html.Div([
         multi=True,  # Allow multiple selections
         clearable=False
     ),
-    dcc.Graph(id='map-plot', style={"width": "100vw", "height": "45vh"}),
-    dcc.Graph(id='scatter-plot', style={"width": "100vw", "height": "45vh"}),  # Adjust the height of the scatter plot
+    dcc.Graph(id='map-plot', style={"width": "100vw", "height": "65vh"}),
+    dcc.Graph(id='scatter-plot', style={"width": "100vw", "height": "25"}),  # Adjust the height of the scatter plot
     html.Div([
         dcc.Dropdown(
             id='language-dropdown',
