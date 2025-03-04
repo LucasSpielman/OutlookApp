@@ -55,7 +55,7 @@ app.layout = html.Div([
     html.H1("Career Outlook for Canadian Economic Regions 2024-2026", style={'textAlign': 'center'}),
     dcc.Dropdown(
         id='noc-dropdown',
-        multi=True,  # Allow multiple selections
+        multi=False,  # Allow only single selection
         clearable=False
     ),
     dcc.Graph(id='map-plot', style={"width": "100vw", "height": "65vh"}),
@@ -71,7 +71,7 @@ app.layout = html.Div([
             clearable=False
         ),
         html.Button('Go to Job Outlook Table', id='job-outlook-button', n_clicks=0)
-    ], style={"position": "absolute", "top": "10px", "right": "10px", "width": "200px"})
+    ], style={"position": "absolute", "bottom": "10px", "right": "10px", "width": "200px"})
 ], style={"width": "100vw", "height": "100vh", "margin": "0", "padding": "0"})
 
 # Combined callback to update the dropdown options and plots based on language selection and NOC Titles
@@ -87,11 +87,11 @@ def update_content(language, selected_nocs):
     sorted_df, outlook_order, outlook_colors = data[language]
     options = [{'label': title, 'value': title} for title in sorted_df['NOC Title'].unique()]
     if not selected_nocs:
-        selected_nocs = [sorted_df['NOC Title'].iloc[0]]  # Default value
+        selected_nocs = sorted_df['NOC Title'].iloc[0]  # Default value
     merged_df = gdf[['ERNAME', 'centroid']].merge(sorted_df, left_on='ERNAME', right_on='Economic Region Name')
     merged_df['lat'] = merged_df['centroid'].apply(lambda point: point.y)
     merged_df['lon'] = merged_df['centroid'].apply(lambda point: point.x)
-    filtered_df = merged_df[merged_df['NOC Title'].isin(selected_nocs)]
+    filtered_df = merged_df[merged_df['NOC Title'] == selected_nocs]
     
     map_fig = px.scatter_mapbox(
         filtered_df, lat='lat', lon='lon', color='Outlook', size_max=15, zoom=3,
@@ -113,7 +113,7 @@ def update_content(language, selected_nocs):
         )
     )
     
-    filtered_df = sorted_df[sorted_df['NOC Title'].isin(selected_nocs)]
+    filtered_df = sorted_df[sorted_df['NOC Title'] == selected_nocs]
     scatter_fig = px.scatter(
         filtered_df, x='Economic Region Name', y='NOC Title', color='Outlook',
         category_orders={'Outlook': outlook_order},
