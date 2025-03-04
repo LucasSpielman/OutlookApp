@@ -13,17 +13,34 @@ file_paths = {
 # Function to load and process data
 def load_data(language):
     df = pd.read_excel(file_paths[language])
-    outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined']
-    outlook_colors = {
-        'very good': 'green',
-        'good': 'blue',
-        'moderate': 'yellow',
-        'limited': 'orange',
-        'undetermined': 'red'
-    }
+    if language == 'English':
+        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined']
+        outlook_colors = {
+            'very good': 'green',
+            'good': 'blue',
+            'moderate': 'yellow',
+            'limited': 'orange',
+            'undetermined': 'red'
+        }
+    else:  # French
+        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'très limitées', 'indéterminées']
+        outlook_colors = {
+            'très bonnes': 'green',
+            'bonnes': 'blue',
+            'modérées': 'yellow',
+            'limitées': 'orange',
+            'très limitées': 'purple',
+            'indéterminées': 'red'
+        }
     df['Outlook'] = pd.Categorical(df['Outlook'], categories=outlook_order, ordered=True)
     sorted_df = df.sort_values(by=['NOC Title', 'Economic Region Name', 'Outlook'])
     return sorted_df, outlook_order, outlook_colors
+
+# Load and process data for both languages at the start
+data = {
+    'English': load_data('English'),
+    'French': load_data('French')
+}
 
 # Load the shapefile
 gdf = gpd.read_file("./data/ler_000b16a_e.shp")
@@ -67,7 +84,7 @@ app.layout = html.Div([
      Input('noc-dropdown', 'value')]
 )
 def update_content(language, selected_nocs):
-    sorted_df, outlook_order, outlook_colors = load_data(language)
+    sorted_df, outlook_order, outlook_colors = data[language]
     options = [{'label': title, 'value': title} for title in sorted_df['NOC Title'].unique()]
     if not selected_nocs:
         selected_nocs = [sorted_df['NOC Title'].iloc[0]]  # Default value
