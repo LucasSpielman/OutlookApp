@@ -53,7 +53,7 @@ app = dash.Dash(__name__)
 
 # App layout
 app.layout = html.Div([
-    html.H1("Career Outlook for Canadian Economic Regions 2024-2026", style={'textAlign': 'left'}),
+    html.H1("Career Outlook for Canadian Economic Regions 2024-2026", style={'textAlign': 'center'}),
     dcc.Dropdown(
         id='noc-dropdown',
         multi=True,  # Allow multiple selections
@@ -102,7 +102,15 @@ def update_content(language, selected_nocs):
     )
     map_fig.update_layout(
         autosize=True,
-        margin={"r":0,"t":0,"l":0,"b":0}
+        margin={"r":0,"t":0,"l":0,"b":0},
+        showlegend=True,  # Show legend for the map plot
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=0,
+            xanchor="left",
+            x=0
+        )
     )
     
     filtered_df = sorted_df[sorted_df['NOC Title'].isin(selected_nocs)]
@@ -110,6 +118,16 @@ def update_content(language, selected_nocs):
         filtered_df, x='Economic Region Name', y='NOC Title', color='Outlook',
         category_orders={'Outlook': outlook_order},
         color_discrete_map=outlook_colors
+    )
+    scatter_fig.update_layout(
+        showlegend=True,  # Show legend for the scatter plot
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=0,
+            xanchor="left",
+            x=0
+        )
     )
     
     return options, selected_nocs, map_fig, scatter_fig
