@@ -78,14 +78,7 @@ def update_map(selected_nocs):
     
     fig.update_layout(
         autosize=True,
-        margin={"r":0,"t":0,"l":0,"b":0},
-        mapbox=dict(
-            accesstoken="your_mapbox_access_token",  # Optional: Add your Mapbox access token if needed
-            style="carto-positron",
-            zoom=3,
-            center={"lat": 56.1304, "lon": -106.3468},
-            scrollZoom=True  # Enable scroll zoom
-        )
+        margin={"r":0,"t":0,"l":0,"b":0}
     )
     
     return fig
