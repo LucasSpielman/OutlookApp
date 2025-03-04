@@ -53,7 +53,7 @@ app = dash.Dash(__name__)
 
 # App layout
 app.layout = html.Div([
-    html.H1("Career Outlook for Canadian Economic Regions 2024-2026", style={'textAlign': 'center'}),
+    html.H1("Career Outlook for Canadian Economic Regions 2024-2026", style={'textAlign': 'right'}),
     dcc.Dropdown(
         id='noc-dropdown',
         multi=True,  # Allow multiple selections
