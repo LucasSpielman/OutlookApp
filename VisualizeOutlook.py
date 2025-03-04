@@ -34,23 +34,36 @@ app.layout = html.Div([
     dcc.Dropdown(
         id='noc-dropdown',
         options=[{'label': title, 'value': title} for title in sorted_df['NOC Title'].unique()],
-        value=sorted_df['NOC Title'].iloc[0],
+        value=[sorted_df['NOC Title'].iloc[0]],  # Default value
+        multi=True,  # Allow multiple selections
         clearable=False
+    ),
+    dcc.Input(
+        id='region-search',
+        type='text',
+        placeholder='Search for a region...',
+        style={'margin-top': '10px', 'margin-bottom': '10px'}
     ),
     dcc.Graph(id='scatter-plot')
 ])
 
-# Callback to update the scatter plot based on dropdown selection
+# Callback to update the scatter plot based on dropdown selection and search query
 @app.callback(
     Output('scatter-plot', 'figure'),
-    Input('noc-dropdown', 'value')
+    [Input('noc-dropdown', 'value'),
+     Input('region-search', 'value')]
 )
-def update_scatter(selected_noc):
-    filtered_df = sorted_df[sorted_df['NOC Title'] == selected_noc].sort_values(by='Outlook')
+def update_scatter(selected_nocs, search_query):
+    filtered_df = sorted_df[sorted_df['NOC Title'].isin(selected_nocs)]
+    
+    if search_query:
+        filtered_df = filtered_df[filtered_df['Economic Region Name'].str.contains(search_query, case=False, na=False)]
+    
+    filtered_df = filtered_df.sort_values(by='Outlook')
     
     fig = px.scatter(
         filtered_df, x='Economic Region Name', y='NOC Title', color='Outlook',
-        title='NOC Title in Each Economic Region Name Colored by Economic Outlook',
+        title='Career Outlook for Canadian Economic Regions 2024-2026',
         category_orders={'Outlook': outlook_order},
         color_discrete_map=outlook_colors
     )
