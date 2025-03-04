@@ -56,8 +56,8 @@ app.layout = html.Div([
         multi=True,  # Allow multiple selections
         clearable=False
     ),
-    dcc.Graph(id='map-plot')
-])
+    dcc.Graph(id='map-plot', style={"width": "100vw", "height": "100vh"})
+], style={"width": "100vw", "height": "100vh", "margin": "0", "padding": "0"})
 
 # Callback to update the map plot based on dropdown selection
 @app.callback(
@@ -74,6 +74,11 @@ def update_map(selected_nocs):
         category_orders={'Outlook': outlook_order},
         color_discrete_map=outlook_colors,
         hover_name='Economic Region Name'
+    )
+    
+    fig.update_layout(
+        autosize=True,
+        margin={"r":0,"t":0,"l":0,"b":0}
     )
     
     return fig
