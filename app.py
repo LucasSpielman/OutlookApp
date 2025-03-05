@@ -1,4 +1,5 @@
 import dash
+import dash_bootstrap_components as dbc
 from dash import dcc, html, Input, Output
 import plotly.express as px
 import pandas as pd
@@ -20,22 +21,24 @@ def load_data(language):
     df = pd.read_excel(file_paths[language])
     
     if language == 'English':
-        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined']
+        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', 'bazinga']
         outlook_colors = {
-            'very good': 'green',
-            'good': 'blue',
-            'moderate': 'yellow',
-            'limited': 'orange',
-            'undetermined': 'red'
+            'very good': '#FF6347',  # Tomato
+            'good': '#FFA07A',  # Light Salmon
+            'moderate': '#FFD700',  # Gold
+            'limited': '#FF8C00',  # Dark Orange
+            'undetermined': '#FF4500',  # Orange Red
+            'bazinga': '#D3D3D3',  # Light Grey
         }
     else:  # French
-        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées']
+        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', 'bazinga']
         outlook_colors = {
-            'très bonnes': 'green',
-            'bonnes': 'blue',
-            'modérées': 'yellow',
-            'limitées': 'orange',
-            'indéterminées': 'red'
+            'très bonnes': '#FF6347',  # Tomato
+            'bonnes': '#FFA07A',  # Light Salmon
+            'modérées': '#FFD700',  # Gold
+            'limitées': '#FF8C00',  # Dark Orange
+            'indéterminées': '#FF4500',  # Orange Red
+            'bazinga': '#D3D3D3',  # Light Grey
         }
     
     df['Outlook'] = pd.Categorical(df['Outlook'], categories=outlook_order, ordered=True)
@@ -53,27 +56,45 @@ gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=Tru
 # Calculate centroids for each region
 gdf['centroid'] = gdf.geometry.centroid
 
-# Initialize the Dash app
-app = dash.Dash(__name__)
+# Initialize the Dash app with the Minty theme
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 
 # App layout
-app.layout = html.Div([
-    html.H1("Canadian Job Market Outlook 2024-2026", style={'textAlign': 'center'}),
-    dcc.Dropdown(
-        id='language-dropdown',
-        options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
-        value='English',
-        clearable=False
-    ),
-    dcc.Dropdown(
-        id='noc-dropdown',
-        value=None,  # Default to None until data loads
-        multi=False,  # Single selection only
-        clearable=False
-    ),
-    dcc.Graph(id='map-plot', style={'height': '70vh'}),  # Adjusted height
-    dcc.Graph(id='bar-plot', style={'height': '15vh'})  # Adjusted height
-])
+app.layout = dbc.Container([
+    dbc.Row([
+        dbc.Col(html.H1("Canadian Job Market Outlook 2024-2026", style={'textAlign': 'center'}), width=12)
+    ]),
+    dbc.Row([
+        dbc.Col(dcc.Dropdown(
+            id='language-dropdown',
+            options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
+            value='English',
+            clearable=False,
+            style={'width': '50%', 'margin': 'auto'}
+        ), width=12)
+    ]),
+    dbc.Row([
+        dbc.Col(dcc.Dropdown(
+            id='noc-dropdown',
+            value=None,  # Default to None until data loads
+            multi=False,  # Single selection only
+            clearable=False,
+            style={'width': '50%', 'margin': 'auto'}
+        ), width=12)
+    ]),
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='map-plot', style={'height': '70vh'}), width=12)  # Adjusted height
+    ]),
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='bar-plot', style={'height': '15vh'}), width=12)  # Adjusted height
+    ]),
+    dbc.Row([
+        dbc.Col(html.P(
+            "Data provided by Statistics Canada. For more information, visit their website: "
+            html.A("Statistics Canada", href="https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b", target="_blank")
+        ), width=12, style={'textAlign': 'center', 'marginTop': '20px'})
+    ])
+], fluid=True)
 
 # Callback to update data when language is switched
 @app.callback(
@@ -101,7 +122,6 @@ def update_plots(selected_noc, language):
     map_fig = px.scatter_mapbox(
         filtered_df, lat='lat', lon='lon', color='Outlook', size_max=13, zoom=3,
         mapbox_style="carto-positron", center={"lat": 56.1304, "lon": -106.3468},
-        # title='Career Outlook for Canadian Economic Regions 2024-2026',
         category_orders={'Outlook': outlook_order},
         color_discrete_map=outlook_colors,
         hover_name='Economic Region Name',
@@ -111,14 +131,24 @@ def update_plots(selected_noc, language):
     # Bar plot
     bar_fig = px.bar(
         filtered_df, x='Economic Region Name', y='Outlook', color='Outlook',
-        # title='Outlook Distribution by Economic Region',
         labels={'x': 'Economic Region Name', 'y': 'Outlook'},
         category_orders={'Outlook': outlook_order},
         color_discrete_map=outlook_colors
     )
     
     # Sync legend across both plots
-    map_fig.update_layout(showlegend=True, height=700)  # Adjusted height
+    map_fig.update_layout(
+        showlegend=True,
+        height=700,  # Adjusted height
+        legend=dict(
+            x=0.01,
+            y=0.99,
+            traceorder='normal',
+            bgcolor='rgba(255, 255, 255, 0.7)',
+            bordercolor='rgba(0, 0, 0, 0.1)',
+            borderwidth=1
+        )
+    )
     bar_fig.update_layout(showlegend=False, height=300)  # Adjusted height, legend removed
     
     return map_fig, bar_fig
