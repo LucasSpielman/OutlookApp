@@ -23,20 +23,20 @@ def load_data(language):
     if language == 'English':
         outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', 'bazinga']
         outlook_colors = {
-            'very good': '#FF6347',  # Tomato
-            'good': '#FFA07A',  # Light Salmon
+            'very good': '#30AD23',  # Warm green 
+            'good': '#1E90FF',  # Dodger Blue
             'moderate': '#FFD700',  # Gold
-            'limited': '#FF8C00',  # Dark Orange
+            'limited': '#FEC47F',  # Warm Orange
             'undetermined': '#FF4500',  # Orange Red
             'bazinga': '#D3D3D3',  # Light Grey
         }
     else:  # French
         outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', 'bazinga']
         outlook_colors = {
-            'très bonnes': '#FF6347',  # Tomato
-            'bonnes': '#FFA07A',  # Light Salmon
+            'très bonnes': '#30AD23',  # Warm Green
+            'bonnes': '#1E90FF',  # Dodger Blue
             'modérées': '#FFD700',  # Gold
-            'limitées': '#FF8C00',  # Dark Orange
+            'limitées': '#FEC47F',  # Warm Orange
             'indéterminées': '#FF4500',  # Orange Red
             'bazinga': '#D3D3D3',  # Light Grey
         }
@@ -86,13 +86,7 @@ app.layout = dbc.Container([
         dbc.Col(dcc.Graph(id='map-plot', style={'height': '70vh'}), width=12)  # Adjusted height
     ]),
     dbc.Row([
-        dbc.Col(dcc.Graph(id='bar-plot', style={'height': '15vh'}), width=12)  # Adjusted height
-    ]),
-    dbc.Row([
-        dbc.Col(html.P(
-            "Data provided by Statistics Canada. For more information, visit their website: "
-            html.A("Statistics Canada", href="https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b", target="_blank")
-        ), width=12, style={'textAlign': 'center', 'marginTop': '20px'})
+        dbc.Col(dcc.Graph(id='bar-plot', style={'height': '20vh'}), width=12)  # Adjusted height
     ])
 ], fluid=True)
 
