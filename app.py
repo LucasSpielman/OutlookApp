@@ -112,13 +112,13 @@ def update_content(language, selected_nocs):
             x=0
         )
     )
-    
+
     filtered_df = sorted_df[sorted_df['NOC Title'] == selected_nocs]
     scatter_fig = px.scatter(
         filtered_df, x='Economic Region Name', y='NOC Title', color='Outlook',
         category_orders={'Outlook': outlook_order},
         color_discrete_map=outlook_colors,
-        title='Scatter Plot of Economic Regions vs NOC Titles',
+        # title='Scatter Plot of Economic Regions vs NOC Titles',
         labels={'Economic Region Name': 'Economic Region', 'NOC Title': 'NOC Title'},
         opacity=0.7
     )
@@ -134,7 +134,7 @@ def update_content(language, selected_nocs):
         xaxis=dict(showgrid=True),
         yaxis=dict(showgrid=True)
     )
-    
+
     return options, selected_nocs, map_fig, scatter_fig
 
 # Run the app
