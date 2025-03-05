@@ -1,141 +1,136 @@
 import dash
-from dash import dcc, html, Input, Output, State
+from dash import dcc, html, Input, Output
 import plotly.express as px
 import pandas as pd
 import geopandas as gpd
 
-# Load the Excel files
+# Load the Excel file paths
 file_paths = {
     'English': "./data/20242026_outlook_n21_en_250117.xlsx",
     'French': "./data/20242026_outlook_n21_fr_250117.xlsx"
 }
 
-# Function to load and process data
-def load_data(language):
-    df = pd.read_excel(file_paths[language])
-    if language == 'English':
-        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined']
-        outlook_colors = {
-            'very good': 'green',
-            'good': 'blue',
-            'moderate': 'yellow',
-            'limited': 'orange',
-            'undetermined': 'red'
-        }
-    else:  # French
-        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées']
-        outlook_colors = {
-            'très bonnes': 'green',
-            'bonnes': 'blue',
-            'modérées': 'yellow',
-            'limitées': 'orange',
-            'indéterminées': 'red'
-        }
-    df['Outlook'] = pd.Categorical(df['Outlook'], categories=outlook_order, ordered=True)
-    sorted_df = df.sort_values(by=['NOC Title', 'Economic Region Name', 'Outlook'])
-    return sorted_df, outlook_order, outlook_colors
+# Global storage for data
+data_cache = {}
 
-# Load and process data for both languages at the start
-data = {
-    'English': load_data('English'),
-    'French': load_data('French')
-}
+# Function to load and cache data
+def load_and_cache_data():
+    global data_cache
+    for language in file_paths:
+        df = pd.read_excel(file_paths[language])
 
-# Load the shapefile
+        if language == 'English':
+            outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined']
+            outlook_colors = {
+                'very good': 'green',
+                'good': 'blue',
+                'moderate': 'yellow',
+                'limited': 'orange',
+                'undetermined': 'red'
+            }
+        else:  # French
+            outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées']
+            outlook_colors = {
+                'très bonnes': 'green',
+                'bonnes': 'blue',
+                'modérées': 'yellow',
+                'limitées': 'orange',
+                'indéterminées': 'red'
+            }
+
+        df['Outlook'] = pd.Categorical(df['Outlook'], categories=outlook_order, ordered=True)
+        sorted_df = df.sort_values(by=['NOC Title', 'Economic Region Name', 'Outlook'])
+
+        data_cache[language] = {
+            "df": sorted_df,
+            "outlook_order": outlook_order,
+            "outlook_colors": outlook_colors
+        }
+
+# Load the shapefile globally
 gdf = gpd.read_file("./data/ler_000b16a_e.shp")
 gdf = gdf.to_crs(epsg=4326)  # Ensure the coordinate reference system is WGS84
+
+# Simplify geometries to improve performance
 gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
+
+# Calculate centroids for each region
 gdf['centroid'] = gdf.geometry.centroid
+
+# Load data once at startup
+load_and_cache_data()
 
 # Initialize the Dash app
 app = dash.Dash(__name__)
 
 # App layout
 app.layout = html.Div([
-    html.H1("Career Outlook for Canadian Economic Regions 2024-2026", style={'textAlign': 'center'}),
     dcc.Dropdown(
-        id='noc-dropdown',
-        multi=False,  # Allow only single selection
+        id='language-dropdown',
+        options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
+        value='English',
         clearable=False
     ),
-    dcc.Graph(id='map-plot', style={"width": "100vw", "height": "65vh"}),
-    dcc.Graph(id='scatter-plot', style={"width": "100vw", "height": "25"}),  # Adjust the height of the scatter plot
-    html.Div([
-        dcc.Dropdown(
-            id='language-dropdown',
-            options=[
-                {'label': 'English', 'value': 'English'},
-                {'label': 'French', 'value': 'French'}
-            ],
-            value='English',  # Default value
-            clearable=False
-        ),
-        html.Button('Go to Job Outlook Table', id='job-outlook-button', n_clicks=0)
-    ], style={"position": "absolute", "bottom": "10px", "right": "10px", "width": "200px"})
-], style={"width": "100vw", "height": "100vh", "margin": "0", "padding": "0"})
+    dcc.Dropdown(
+        id='noc-dropdown',
+        value=None,  # Default to None until data loads
+        multi=False,
+        clearable=False
+    ),
+    dcc.Graph(id='map-plot'),
+    dcc.Graph(id='bar-plot')
+])
 
-# Combined callback to update the dropdown options and plots based on language selection and NOC Titles
+# Callback to update NOC dropdown
 @app.callback(
-    [Output('noc-dropdown', 'options'),
-     Output('noc-dropdown', 'value'),
-     Output('map-plot', 'figure'),
-     Output('scatter-plot', 'figure')],
-    [Input('language-dropdown', 'value'),
-     Input('noc-dropdown', 'value')]
+    [Output('noc-dropdown', 'options'), Output('noc-dropdown', 'value')],
+    Input('language-dropdown', 'value')
 )
-def update_content(language, selected_nocs):
-    sorted_df, outlook_order, outlook_colors = data[language]
+def update_noc_dropdown(language):
+    sorted_df = data_cache[language]["df"]
     options = [{'label': title, 'value': title} for title in sorted_df['NOC Title'].unique()]
-    if not selected_nocs:
-        selected_nocs = sorted_df['NOC Title'].iloc[0]  # Default value
+    return options, sorted_df['NOC Title'].iloc[0]
+
+# Callback to update both plots
+@app.callback(
+    [Output('map-plot', 'figure'), Output('bar-plot', 'figure')],
+    [Input('noc-dropdown', 'value'), Input('language-dropdown', 'value')]
+)
+def update_plots(selected_noc, language):
+    sorted_df = data_cache[language]["df"]
+    outlook_order = data_cache[language]["outlook_order"]
+    outlook_colors = data_cache[language]["outlook_colors"]
+
     merged_df = gdf[['ERNAME', 'centroid']].merge(sorted_df, left_on='ERNAME', right_on='Economic Region Name')
     merged_df['lat'] = merged_df['centroid'].apply(lambda point: point.y)
     merged_df['lon'] = merged_df['centroid'].apply(lambda point: point.x)
-    filtered_df = merged_df[merged_df['NOC Title'] == selected_nocs]
-    
+    filtered_df = merged_df[merged_df['NOC Title'] == selected_noc]
+
+    # Map plot
     map_fig = px.scatter_mapbox(
-        filtered_df, lat='lat', lon='lon', color='Outlook', size_max=15, zoom=3,
+        filtered_df, lat='lat', lon='lon', color='Outlook', size_max=13, zoom=3,
         mapbox_style="carto-positron", center={"lat": 56.1304, "lon": -106.3468},
+        title='Career Outlook for Canadian Economic Regions 2024-2026',
         category_orders={'Outlook': outlook_order},
         color_discrete_map=outlook_colors,
-        hover_name='Economic Region Name'
-    )
-    map_fig.update_layout(
-        autosize=True,
-        margin={"r":0,"t":0,"l":0,"b":0},
-        showlegend=True,  # Show legend for the map plot
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=0,
-            xanchor="left",
-            x=0
-        )
+        hover_name='Economic Region Name',
+        size=[6.5] * len(filtered_df)
     )
 
-    filtered_df = sorted_df[sorted_df['NOC Title'] == selected_nocs]
-    scatter_fig = px.scatter(
-        filtered_df, x='Economic Region Name', y='NOC Title', color='Outlook',
+    # Bar plot
+    bar_fig = px.bar(
+        filtered_df, x='Economic Region Name', y=[1] * len(filtered_df), color='Outlook',
+        # title='Outlook Distribution by Economic Region',
+        labels={'x': 'Economic Region Name', 'y': 'Count'},
         category_orders={'Outlook': outlook_order},
-        color_discrete_map=outlook_colors,
-        # title='Scatter Plot of Economic Regions vs NOC Titles',
-        labels={'Economic Region Name': 'Economic Region', 'NOC Title': 'NOC Title'},
-        opacity=0.7
-    )
-    scatter_fig.update_layout(
-        showlegend=True,  # Show legend for the scatter plot
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=0,
-            xanchor="left",
-            x=0
-        ),
-        xaxis=dict(showgrid=True),
-        yaxis=dict(showgrid=True)
+        color_discrete_map=outlook_colors
     )
 
-    return options, selected_nocs, map_fig, scatter_fig
+    # Sync legend across both plots
+    map_fig.update_layout(showlegend=True)
+    bar_fig.update_layout(showlegend=True, legend=dict(title='Outlook'))
+
+    return map_fig, bar_fig
 
 # Run the app
 if __name__ == '__main__':
