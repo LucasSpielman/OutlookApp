@@ -3,8 +3,10 @@ import dash_table
 import pandas as pd
 from dash import dcc, html
 from dash.dependencies import Input, Output
-import plotly.express as px
 from bs4 import BeautifulSoup
+import dash_bootstrap_components as dbc
+
+import plotly.express as px
 
 # TODO: [DONE] Have df_region_filtered be filtered by the user's input
 # TODO: [DONE] Have search for economic region be a dropdown menu
@@ -43,8 +45,8 @@ economic_regions = sorted(data_frames['English']['Economic Region Name'].unique(
 all_regions_option = [{'label': 'All Regions', 'value': 'All Regions'}]
 region_options = all_regions_option + [{'label': region, 'value': region} for region in economic_regions]
 
-# Simple Dash app to display the DataFrame
-app = dash.Dash(__name__)
+# Simple Dash app to display the DataFrame with Minty theme
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 app.layout = html.Div([
     html.H1("Economic Region Outlook Data", style={'text-align': 'center'}),
     
