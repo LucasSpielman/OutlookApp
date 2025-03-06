@@ -175,7 +175,7 @@ def update_plots(selected_noc, language):
     # Sync legend across both plots
     map_fig.update_layout(
         showlegend=True,
-        height=700,  # Adjusted height
+        # height=900,  # Adjusted height
         legend=dict(
             x=0.01,
             y=0.99,
@@ -185,7 +185,9 @@ def update_plots(selected_noc, language):
             borderwidth=1
         )
     )
-    bar_fig.update_layout(showlegend=False, height=300)  # Adjusted height, legend removed
+    bar_fig.update_layout(showlegend=False, 
+    # height=275 # Adjusted height, legend removed
+    )  
     
     return map_fig, bar_fig
 
