@@ -88,7 +88,7 @@ app.layout = dbc.Container([
             options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
             value='English',
             clearable=False,
-            style={'width': '50%', 'margin': 'auto'}
+            style={'width': '35%', 'margin': 'auto'}
         ), width=12)
     ]),
     dbc.Row([
@@ -101,12 +101,18 @@ app.layout = dbc.Container([
         ), width=12)
     ]),
     dbc.Row([
-        dbc.Col(dcc.Graph(id='map-plot', style={'height': '70vh'}), width=12)  # Adjusted height
+        dbc.Col(dcc.Graph(id='map-plot', style={'height': '60vh'}), width=12)  # Adjusted height
     ]),
     dbc.Row([
         dbc.Col(dcc.Graph(id='bar-plot', style={'height': '20vh'}), width=12)  # Adjusted height
     ]),
-
+    # Footer with data source information
+    dbc.Row([
+        dbc.Col(html.Footer([
+            html.P("Data sourced and provided by the Government of Canada."),
+            html.A("Visit the website", href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank")
+        ], style={'text-align': 'center', 'margin-top': '20px'}), width=12)
+    ])
 ], fluid=True)
 
 # Callback to update data when language is switched
@@ -175,7 +181,7 @@ def update_plots(selected_noc, language):
     # Sync legend across both plots
     map_fig.update_layout(
         showlegend=True,
-        # height=900,  # Adjusted height
+        # height=700,  # Adjusted height
         legend=dict(
             x=0.01,
             y=0.99,
@@ -185,9 +191,10 @@ def update_plots(selected_noc, language):
             borderwidth=1
         )
     )
-    bar_fig.update_layout(showlegend=False, 
-    # height=275 # Adjusted height, legend removed
-    )  
+    bar_fig.update_layout(
+        showlegend=False, 
+        # height=300 # Adjusted height, legend removed
+        )  
     
     return map_fig, bar_fig
 
