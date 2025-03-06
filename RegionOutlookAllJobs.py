@@ -64,7 +64,16 @@ app.layout = dbc.Container([
         dbc.Col(dcc.Dropdown(id='region-dropdown', value=None, clearable=False, style={'width': '50%', 'margin': 'auto'}), width=12)
     ]),
     dbc.Row([
-        dbc.Col(dcc.Graph(id='bar-plot', style={'height': '600vh'}), width=12)
+        dbc.Col(dcc.Dropdown(
+            id='outlook-dropdown', 
+            value=None, 
+            multi=True,  # Allow multiple selections
+            clearable=False, 
+            style={'width': '50%', 'margin': 'auto'}
+        ), width=12)
+    ]),
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='bar-plot', style={'height': '50vh'}), width=12)
     ]),
     dbc.Row([
         dbc.Col(html.Footer([
@@ -75,35 +84,63 @@ app.layout = dbc.Container([
 ], fluid=True)
 
 @app.callback(
-    [Output('region-dropdown', 'options'), Output('region-dropdown', 'value')],
+    [Output('region-dropdown', 'options'), Output('region-dropdown', 'value'),
+     Output('outlook-dropdown', 'options'), Output('outlook-dropdown', 'value')],
     Input('language-dropdown', 'value')
 )
-def update_region_dropdown(language):
-    sorted_df, _, _ = load_data(language)
-    options = [{'label': region, 'value': region} for region in sorted(sorted_df['Economic Region Name'].unique())]
-    return options, sorted_df['Economic Region Name'].iloc[0]
+def update_dropdowns(language):
+    sorted_df, outlook_order, _ = load_data(language)
+    region_options = [{'label': region, 'value': region} for region in sorted(sorted_df['Economic Region Name'].unique())]
+    outlook_options = [{'label': outlook, 'value': outlook} for outlook in outlook_order]
+
+    return region_options, sorted_df['Economic Region Name'].iloc[0], outlook_options, outlook_order[:2]  # Default select first 2 outlooks
 
 @app.callback(
     Output('bar-plot', 'figure'),
-    [Input('region-dropdown', 'value'), Input('language-dropdown', 'value')]
+    [Input('region-dropdown', 'value'), Input('language-dropdown', 'value'), Input('outlook-dropdown', 'value')]
 )
-def update_bar_plot(selected_region, language):
+def update_bar_plot(selected_region, language, selected_outlooks):
     sorted_df, outlook_order, outlook_colors = load_data(language)
-    filtered_df = sorted_df[sorted_df['Economic Region Name'] == selected_region]
     
+    # Ensure selected_outlooks is a list
+    if not selected_outlooks:
+        selected_outlooks = outlook_order  # Default to all outlooks
+    
+    # Filter data based on region and selected outlooks
+    filtered_df = sorted_df[
+        (sorted_df['Economic Region Name'] == selected_region) & 
+        (sorted_df['Outlook'].isin(selected_outlooks))
+    ]
+    
+    # Create the bar chart with a fixed category order
     bar_fig = px.bar(
-        filtered_df, x='NOC Title', y='Outlook', color='Outlook',
+        filtered_df,
+        x='NOC Title',
+        y='Outlook',
+        color='Outlook',
         labels={'x': 'NOC Title', 'y': 'Outlook'},
-        category_orders={'Outlook': outlook_order},
-        color_discrete_map=outlook_colors
+        color_discrete_map=outlook_colors,
+        category_orders={'Outlook': outlook_order}
     )
     
+    # Force the y-axis to display all categories even if there is no data for some
+    bar_fig.update_yaxes(
+        tickmode='array',
+        tickvals=outlook_order,
+        ticktext=outlook_order
+    )
+    
+    # Update layout to place the legend inside the chart
     bar_fig.update_layout(
-        showlegend=True,
-        # height=800,
-        legend=dict(title="Outlook"),
-        legend_itemclick="toggle",
-        legend_itemdoubleclick="toggleothers"
+        title=f"Job Outlooks in {selected_region}",
+        legend_title="Outlook Categories",
+        legend=dict(
+            x=0.02,  # Adjusts the horizontal position (0 = left, 1 = right)
+            y=0.98,  # Adjusts the vertical position (0 = bottom, 1 = top)
+            bgcolor="rgba(255,255,255,0.6)",  # Adds a semi-transparent white background
+            bordercolor="black",
+            borderwidth=1
+        )
     )
     
     return bar_fig
