@@ -110,7 +110,10 @@ def update_bar_plot(selected_region, language, selected_outlooks):
     filtered_df = sorted_df[
         (sorted_df['Economic Region Name'] == selected_region) & 
         (sorted_df['Outlook'].isin(selected_outlooks))
-    ]
+    ].copy()  # Make a copy to avoid modifying original data
+    
+    # Truncate x-axis labels to max 30 characters
+    filtered_df['NOC Title'] = filtered_df['NOC Title'].apply(lambda x: x[:27] + '...' if len(x) > 30 else x)
     
     # Create the bar chart with a fixed category order
     bar_fig = px.bar(
@@ -130,20 +133,29 @@ def update_bar_plot(selected_region, language, selected_outlooks):
         ticktext=outlook_order
     )
     
-    # Update layout to place the legend inside the chart
+    # Update layout for hover text and legend dynamically fitting in the top-left corner
     bar_fig.update_layout(
         title=f"Job Outlooks in {selected_region}",
         legend_title="Outlook Categories",
         legend=dict(
-            x=0.02,  # Adjusts the horizontal position (0 = left, 1 = right)
-            y=0.98,  # Adjusts the vertical position (0 = bottom, 1 = top)
+            x=0,  # Aligns the legend to the left
+            y=1,  # Aligns the legend to the top
+            xanchor="left",  # Ensures left alignment
+            yanchor="top",   # Ensures top alignment
             bgcolor="rgba(255,255,255,0.6)",  # Adds a semi-transparent white background
             bordercolor="black",
             borderwidth=1
-        )
+        ),
+        hoverlabel=dict(
+            font_size=16,  # Larger hover text
+            font_family="Arial"
+        ),
+        xaxis_tickangle=-45  # Rotate labels to avoid overlap
     )
     
     return bar_fig
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
