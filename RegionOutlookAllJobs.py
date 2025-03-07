@@ -76,6 +76,16 @@ app.layout = dbc.Container([
         dbc.Col(dcc.Graph(id='bar-plot', style={'height': '50vh'}), width=12)
     ]),
     dbc.Row([
+        dbc.Col(dcc.Slider(
+            id='page-slider',
+            min=1,
+            max=1,
+            step=1,
+            value=1,
+            marks={1: '1'}
+        ), width=12)
+    ]),
+    dbc.Row([
         dbc.Col(html.Footer([
             html.P("Data sourced and provided by the Government of Canada."),
             html.A("Visit the website", href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank")
@@ -96,10 +106,10 @@ def update_dropdowns(language):
     return region_options, sorted_df['Economic Region Name'].iloc[0], outlook_options, outlook_order[:2]  # Default select first 2 outlooks
 
 @app.callback(
-    Output('bar-plot', 'figure'),
-    [Input('region-dropdown', 'value'), Input('language-dropdown', 'value'), Input('outlook-dropdown', 'value')]
+    [Output('bar-plot', 'figure'), Output('page-slider', 'max'), Output('page-slider', 'marks')],
+    [Input('region-dropdown', 'value'), Input('language-dropdown', 'value'), Input('outlook-dropdown', 'value'), Input('page-slider', 'value')]
 )
-def update_bar_plot(selected_region, language, selected_outlooks):
+def update_bar_plot(selected_region, language, selected_outlooks, page):
     sorted_df, outlook_order, outlook_colors = load_data(language)
     
     # Ensure selected_outlooks is a list
@@ -112,18 +122,26 @@ def update_bar_plot(selected_region, language, selected_outlooks):
         (sorted_df['Outlook'].isin(selected_outlooks))
     ].copy()  # Make a copy to avoid modifying original data
     
-    # Truncate x-axis labels to max 30 characters
-    filtered_df['NOC Title'] = filtered_df['NOC Title'].apply(lambda x: x[:27] + '...' if len(x) > 30 else x)
+    # Remove duplicate NOC Titles
+    filtered_df = filtered_df.drop_duplicates(subset=['NOC Title'])
+    
+    # Pagination logic
+    items_per_page = 10
+    total_pages = (len(filtered_df) + items_per_page - 1) // items_per_page
+    start_idx = (page - 1) * items_per_page
+    end_idx = start_idx + items_per_page
+    paginated_df = filtered_df.iloc[start_idx:end_idx]
     
     # Create the bar chart with a fixed category order
     bar_fig = px.bar(
-        filtered_df,
+        paginated_df,
         x='NOC Title',
         y='Outlook',
         color='Outlook',
         labels={'x': 'NOC Title', 'y': 'Outlook'},
         color_discrete_map=outlook_colors,
-        category_orders={'Outlook': outlook_order}
+        category_orders={'Outlook': outlook_order},
+        hover_data={'NOC Title': True}  # Ensure full text is shown on hover
     )
     
     # Force the y-axis to display all categories even if there is no data for some
@@ -144,18 +162,28 @@ def update_bar_plot(selected_region, language, selected_outlooks):
             yanchor="top",   # Ensures top alignment
             bgcolor="rgba(255,255,255,0.6)",  # Adds a semi-transparent white background
             bordercolor="black",
-            borderwidth=1
+            borderwidth=1,
+            itemclick="toggleothers"  # Ensure only one Outlook can be selected at a time
         ),
         hoverlabel=dict(
             font_size=16,  # Larger hover text
             font_family="Arial"
         ),
-        xaxis_tickangle=-45  # Rotate labels to avoid overlap
+        xaxis_tickangle=-45,  # Rotate labels to avoid overlap
+        xaxis=dict(
+            title_font=dict(size=18),  # Increase x-axis title font size
+            tickfont=dict(size=14)  # Increase x-axis tick font size
+        ),
+        yaxis=dict(
+            title_font=dict(size=18),  # Increase y-axis title font size
+            tickfont=dict(size=14)  # Increase y-axis tick font size
+        )
     )
     
-    return bar_fig
-
-
+    # Update slider marks
+    slider_marks = {i: str(i) for i in range(1, total_pages + 1)}
+    
+    return bar_fig, total_pages, slider_marks
 
 if __name__ == '__main__':
     app.run_server(debug=True)
