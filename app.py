@@ -1,6 +1,6 @@
 import dash
 import dash_bootstrap_components as dbc
-from dash import dcc, html, Input, Output
+from dash import dcc, html, Input, Output, State
 import plotly.express as px
 import pandas as pd
 import geopandas as gpd
@@ -80,49 +80,84 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 # App layout
 app.layout = dbc.Container([
     dbc.Row([
-        dbc.Col(html.H1("Canadian Job Market Outlook 2024-2026", style={'textAlign': 'center'}), width=12)
-    ]),
-    dbc.Row([
-        dbc.Col(dcc.Dropdown(
-            id='language-dropdown',
-            options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
-            value='English',
-            clearable=False,
-            style={'width': '35%', 'margin': 'auto'}
-        ), width=12)
-    ]),
-    dbc.Row([
+        dbc.Col(html.H1("Canadian Job Market Outlook 2024-2026", style={'textAlign': 'left', 'margin-top': '20px'}), width=6),
         dbc.Col(dcc.Dropdown(
             id='noc-dropdown',
             value=None,  # Default to None until data loads
             multi=False,  # Single selection only
             clearable=False,
-            style={'width': '50%', 'margin': 'auto'}
-        ), width=12)
-    ]),
+            style={'width': '100%', 'margin-top': '20px'}
+        ), width=3),
+        dbc.Col(dcc.Dropdown(
+            id='region-dropdown',
+            value=['All'],  # Default to 'All'
+            multi=True,  # Allow multiple selections
+            clearable=True,
+            placeholder="Select Economic Region",
+            style={'width': '100%', 'margin-top': '20px'}
+        ), width=3)
+    ], style={'margin-left': '0', 'margin-right': '0'}),
     dbc.Row([
         dbc.Col(dcc.Graph(id='map-plot', style={'height': '60vh'}), width=12)  # Adjusted height
-    ]),
+    ], style={'margin-left': '0', 'margin-right': '0'}),
     dbc.Row([
         dbc.Col(dcc.Graph(id='bar-plot', style={'height': '20vh'}), width=12)  # Adjusted height
-    ]),
-    # Footer with data source information
+    ], style={'margin-left': '0', 'margin-right': '0'}),
     dbc.Row([
-        dbc.Col(html.Footer([
-            html.P("Data sourced and provided by the Government of Canada."),
-            html.A("Visit the website", href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank")
+        dbc.Col(html.P([
+            "Data sourced and provided by the Government of Canada. ",
+            html.Br(),
+            html.A("Visit the website", href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank"),
+            html.Br(),
+            html.A("Open Canada Data", href="https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
         ], style={'text-align': 'center', 'margin-top': '20px'}), width=12)
-    ])
+    ], style={'margin-left': '0', 'margin-right': '0'}),
+    # Footer with language dropdown
+    dbc.Row([
+        dbc.Col(html.Button("Info", id="open-info-modal", className="btn btn-info", style={'margin-left': '10px'}), width="auto"),
+        dbc.Col(dcc.Dropdown(
+            id='language-dropdown',
+            options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
+            value='English',
+            clearable=False,
+            style={'width': '150px', 'margin-right': 'auto', 'margin-left': 'auto'}  # Normal width
+        ), width=3, style={'margin-left': 'auto'})
+    ], style={'position': 'absolute', 'bottom': '20px', 'width': '100%', 'left': '0', 'right': '0'}),
+    # Info modal
+    dbc.Modal([
+        dbc.ModalHeader("Information"),
+        dbc.ModalBody(
+            "This dashboard provides an outlook on the Canadian job market for 2024-2026. \n"
+            "The map shows the geographical distribution of job outlooks across different regions. \n"
+            "The bar plot displays the outlook for various economic regions. \n"
+            "'Outlook' refers to the projected job market conditions, categorized as 'very good', 'good', 'moderate', 'limited', and 'undetermined'. \n"
+            "For more information, visit the StatCAN website. \n"
+        ),
+        dbc.ModalFooter(
+            dbc.Button("Close", id="close-info-modal", className="ml-auto")
+        )
+    ], id="info-modal", is_open=False)
 ], fluid=True)
+
+# Callback to toggle the info modal
+@app.callback(
+    Output("info-modal", "is_open"),
+    [Input("open-info-modal", "n_clicks"), Input("close-info-modal", "n_clicks")],
+    [State("info-modal", "is_open")]
+)
+def toggle_info_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
 
 # Callback to update data when language is switched
 @app.callback(
-    [Output('noc-dropdown', 'options'), Output('noc-dropdown', 'value')],
+    [Output('noc-dropdown', 'options'), Output('noc-dropdown', 'value'), Output('region-dropdown', 'options')],
     Input('language-dropdown', 'value')
 )
-def update_noc_dropdown(language):
+def update_dropdowns(language):
     """
-    Update the NOC dropdown options and value based on the selected language.
+    Update the NOC and region dropdown options and values based on the selected language.
 
     Parameters:
     language (str): The selected language ('English' or 'French').
@@ -131,20 +166,22 @@ def update_noc_dropdown(language):
     tuple: A tuple containing the dropdown options and the first NOC title as the default value.
     """
     sorted_df, _, _ = load_data(language)
-    options = [{'label': title, 'value': title} for title in sorted(sorted_df['NOC Title'].unique())]
-    return options, sorted_df['NOC Title'].iloc[0]
+    noc_options = [{'label': title, 'value': title} for title in sorted(sorted_df['NOC Title'].unique())]
+    region_options = [{'label': 'All', 'value': 'All'}] + [{'label': region, 'value': region} for region in sorted(sorted_df['Economic Region Name'].unique())]
+    return noc_options, sorted_df['NOC Title'].iloc[0], region_options
 
 # Callback to update both plots based on dropdown selection
 @app.callback(
     [Output('map-plot', 'figure'), Output('bar-plot', 'figure')],
-    [Input('noc-dropdown', 'value'), Input('language-dropdown', 'value')]
+    [Input('noc-dropdown', 'value'), Input('region-dropdown', 'value'), Input('language-dropdown', 'value')]
 )
-def update_plots(selected_noc, language):
+def update_plots(selected_noc, selected_regions, language):
     """
-    Update the map and bar plots based on the selected NOC title and language.
+    Update the map and bar plots based on the selected NOC title, regions, and language.
 
     Parameters:
     selected_noc (str): The selected NOC title.
+    selected_regions (list): The selected economic regions.
     language (str): The selected language ('English' or 'French').
 
     Returns:
@@ -157,8 +194,10 @@ def update_plots(selected_noc, language):
     merged_df['lat'] = merged_df['centroid'].apply(lambda point: point.y)
     merged_df['lon'] = merged_df['centroid'].apply(lambda point: point.x)
     
-    # Filter the DataFrame by the selected NOC title
+    # Filter the DataFrame by the selected NOC title and regions
     filtered_df = merged_df[merged_df['NOC Title'] == selected_noc]
+    if selected_regions and 'All' not in selected_regions:
+        filtered_df = filtered_df[filtered_df['Economic Region Name'].isin(selected_regions)]
     
     # Create the map plot
     map_fig = px.scatter_mapbox(
@@ -181,7 +220,6 @@ def update_plots(selected_noc, language):
     # Sync legend across both plots
     map_fig.update_layout(
         showlegend=True,
-        # height=700,  # Adjusted height
         legend=dict(
             x=0.01,
             y=0.99,
@@ -192,9 +230,8 @@ def update_plots(selected_noc, language):
         )
     )
     bar_fig.update_layout(
-        showlegend=False, 
-        # height=300 # Adjusted height, legend removed
-        )  
+        showlegend=False
+    )  
     
     return map_fig, bar_fig
 
