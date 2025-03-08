@@ -39,12 +39,8 @@ def update_map(selected_region):
     fig = px.choropleth_mapbox(
         filtered_gdf, geojson=filtered_gdf.geometry, locations=filtered_gdf.index, color="ERNAME",
         mapbox_style="carto-positron", center={"lat": filtered_gdf.centroid.y.mean(), "lon": filtered_gdf.centroid.x.mean()},
-        zoom=6, hover_name='ERNAME', opacity=0.5,  # Set opacity to 0.5
-        hover_data={'index': False}  # Remove the index from the hover window
+        zoom=6, hover_name='ERNAME', opacity=0.5  # Set opacity to 0.5
     )
-    
-    # Remove the legend
-    fig.update_layout(showlegend=False)
     
     return fig
 
