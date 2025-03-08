@@ -33,24 +33,24 @@ def load_data(language):
     
     # Define the outlook order and colors based on the language
     if language == 'English':
-        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', 'bazinga']
+        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', ' ']
         outlook_colors = {
             'very good': '#30AD23',  # Warm green 
             'good': '#1E90FF',  # Dodger Blue
             'moderate': '#FFD700',  # Gold
             'limited': '#F08315',  # Warm Orange
             'undetermined': '#BA110C',  # Dark Red
-            'bazinga': '#D3D3D3',  # Light Grey
+            ' ': '#D3D3D3',  # Light Grey
         }
     else:  # French
-        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', 'bazinga']
+        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', ' ']
         outlook_colors = {
             'très bonnes': '#30AD23',  # Warm Green
             'bonnes': '#1E90FF',  # Dodger Blue
             'modérées': '#FFD700',  # Gold
             'limitées': '#F08315',  # Warm Orange
             'indéterminées': '#BA110C',  # Dark Red
-            'bazinga': '#D3D3D3',  # Light Grey
+            ' ': '#D3D3D3',  # Light Grey
         }
     
     # Convert the 'Outlook' column to a categorical type with the defined order
@@ -80,7 +80,7 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 # App layout
 app.layout = dbc.Container([
     dbc.Row([
-        dbc.Col(html.H1("Canadian Job Market Outlook 2024-2026", style={'textAlign': 'left', 'margin-top': '20px'}), width=6),
+        dbc.Col(html.H1(id='dashboard-title', style={'textAlign': 'left', 'margin-top': '20px'}), width=6),
         dbc.Col(dcc.Dropdown(
             id='noc-dropdown',
             value=None,  # Default to None until data loads
@@ -104,13 +104,7 @@ app.layout = dbc.Container([
         dbc.Col(dcc.Graph(id='bar-plot', style={'height': '20vh'}), width=12)  # Adjusted height
     ], style={'margin-left': '0', 'margin-right': '0'}),
     dbc.Row([
-        dbc.Col(html.P([
-            "Data sourced and provided by the Government of Canada. ",
-            html.Br(),
-            html.A("Visit the website", href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank"),
-            html.Br(),
-            html.A("Open Canada Data", href="https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
-        ], style={'text-align': 'center', 'margin-top': '20px'}), width=12)
+        dbc.Col(html.P(id='data-source', style={'text-align': 'center', 'margin-top': '20px'}), width=12, style={'position': 'absolute', 'bottom': '60px', 'width': '100%'})
     ], style={'margin-left': '0', 'margin-right': '0'}),
     # Footer with language dropdown
     dbc.Row([
@@ -125,16 +119,10 @@ app.layout = dbc.Container([
     ], style={'position': 'absolute', 'bottom': '20px', 'width': '100%', 'left': '0', 'right': '0'}),
     # Info modal
     dbc.Modal([
-        dbc.ModalHeader("Information"),
-        dbc.ModalBody(
-            "This dashboard provides an outlook on the Canadian job market for 2024-2026. \n"
-            "The map shows the geographical distribution of job outlooks across different regions. \n"
-            "The bar plot displays the outlook for various economic regions. \n"
-            "'Outlook' refers to the projected job market conditions, categorized as 'very good', 'good', 'moderate', 'limited', and 'undetermined'. \n"
-            "For more information, visit the StatCAN website. \n"
-        ),
+        dbc.ModalHeader(id="info-modal-header"),
+        dbc.ModalBody(id="info-modal-body"),
         dbc.ModalFooter(
-            dbc.Button("Close", id="close-info-modal", className="ml-auto")
+            dbc.Button(id="close-info-modal", className="ml-auto")
         )
     ], id="info-modal", is_open=False)
 ], fluid=True)
@@ -152,7 +140,7 @@ def toggle_info_modal(n1, n2, is_open):
 
 # Callback to update data when language is switched
 @app.callback(
-    [Output('noc-dropdown', 'options'), Output('noc-dropdown', 'value'), Output('region-dropdown', 'options')],
+    [Output('noc-dropdown', 'options'), Output('noc-dropdown', 'value'), Output('region-dropdown', 'options'), Output('dashboard-title', 'children'), Output('info-modal-header', 'children'), Output('info-modal-body', 'children'), Output('close-info-modal', 'children'), Output('data-source', 'children')],
     Input('language-dropdown', 'value')
 )
 def update_dropdowns(language):
@@ -168,7 +156,43 @@ def update_dropdowns(language):
     sorted_df, _, _ = load_data(language)
     noc_options = [{'label': title, 'value': title} for title in sorted(sorted_df['NOC Title'].unique())]
     region_options = [{'label': 'All', 'value': 'All'}] + [{'label': region, 'value': region} for region in sorted(sorted_df['Economic Region Name'].unique())]
-    return noc_options, sorted_df['NOC Title'].iloc[0], region_options
+    if language == 'English':
+        title = "Canadian Job Market Outlook 2024-2026"
+        info_header = "Information"
+        info_body = (
+            "This dashboard provides an outlook on the Canadian job market for 2024-2026. \n"
+            "The map shows the geographical distribution of job outlooks across different regions. \n"
+            "The bar plot displays the outlook for various economic regions. \n"
+            "'Outlook' refers to the projected job market conditions, categorized as 'very good', 'good', 'moderate', 'limited', and 'undetermined'. \n"
+            "For more information, visit the StatCAN website. \n"
+        )
+        close_button = "Close"
+        data_source = [
+            "Data sourced and provided by the Government of Canada. ",
+            html.Br(),
+            html.A("Visit the website", href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank"),
+            html.Br(),
+            html.A("Open Canada Data", href="https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
+        ]
+    else:
+        title = "Perspectives du marché du travail canadien 2024-2026"
+        info_header = "Information"
+        info_body = (
+            "Ce tableau de bord fournit des perspectives sur le marché du travail canadien pour 2024-2026. \n"
+            "La carte montre la répartition géographique des perspectives d'emploi dans différentes régions. \n"
+            "Le graphique à barres affiche les perspectives pour diverses régions économiques. \n"
+            "'Perspectives' fait référence aux conditions projetées du marché du travail, classées comme 'très bonnes', 'bonnes', 'modérées', 'limitées' et 'indéterminées'. \n"
+            "Pour plus d'informations, visitez le site Web de StatCAN. \n"
+        )
+        close_button = "Fermer"
+        data_source = [
+            "Données fournies par le gouvernement du Canada. ",
+            html.Br(),
+            html.A("Visitez le site Web", href="https://www.statcan.gc.ca/fr/sujets/norme/cnp/2021/indexV1", target="_blank"),
+            html.Br(),
+            html.A("Données ouvertes Canada", href="https://ouvert.canada.ca/data/fr/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
+        ]
+    return noc_options, sorted_df['NOC Title'].iloc[0], region_options, title, info_header, info_body, close_button, data_source
 
 # Callback to update both plots based on dropdown selection
 @app.callback(
@@ -210,9 +234,10 @@ def update_plots(selected_noc, selected_regions, language):
     )
     
     # Create the bar plot
+    bar_labels = {'x': 'Economic Region Name', 'y': 'Outlook'} if language == 'English' else {'x': 'Nom de la région économique', 'y': 'Perspectives'}
     bar_fig = px.bar(
         filtered_df, x='Economic Region Name', y='Outlook', color='Outlook',
-        labels={'x': 'Economic Region Name', 'y': 'Outlook'},
+        labels=bar_labels,
         category_orders={'Outlook': outlook_order},
         color_discrete_map=outlook_colors
     )
