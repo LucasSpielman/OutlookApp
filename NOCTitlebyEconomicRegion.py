@@ -44,24 +44,24 @@ def load_data(language):
 
     # Define the outlook order and colors based on the language
     if language == 'English':
-        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', 'bazinga']
+        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', 'None']
         outlook_colors = {
             'very good': '#30AD23',  # Warm green
             'good': '#1E90FF',  # Dodger Blue
             'moderate': '#FFD700',  # Gold
             'limited': '#F08315',  # Warm Orange
             'undetermined': '#BA110C',  # Dark Red
-            'bazinga': '#D3D3D3',  # Light Grey
+            'None': '#D3D3D3',  # Light Grey
         }
     else:  # French
-        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', 'bazinga']
+        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', 'None']
         outlook_colors = {
             'très bonnes': '#30AD23',  # Warm Green
             'bonnes': '#1E90FF',  # Dodger Blue
             'modérées': '#FFD700',  # Gold
             'limitées': '#F08315',  # Warm Orange
             'indéterminées': '#BA110C',  # Dark Red
-            'bazinga': '#D3D3D3',  # Light Grey
+            'None': '#D3D3D3',  # Light Grey
         }
 
     # Extract the first part of 'Economic Region Name' before the comma
@@ -83,51 +83,141 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 # Define the layout of the app
 app.layout = dbc.Container([
     # Title row
-    dbc.Row([
-        dbc.Col(html.H1("Canadian Job Outlook sorted by Economic Region 2024-2026", style={'textAlign': 'left', 'margin-top': '20px'}), width=12)
-    ]),
+    dbc.Row([dbc.Col(html.H1("Canadian Job Market Outlook 2024-2026", style={'textAlign': 'Left'}), width=12)]),
+    
     # Region dropdown row
     dbc.Row([
-        dbc.Col(dcc.Dropdown(
-            id='region-dropdown',
-            options=[{'label': region, 'value': region} for region in gdf['ERNAME'].unique()],
-            value=gdf['ERNAME'].iloc[0],
-            clearable=False
-        ), width=12)
-    ]),
+        dbc.Col(dcc.Dropdown(id='region-dropdown', value=None, clearable=False, style={'width': '50%', 'margin': 'left'}), width=6)
+    ], justify='end'),
+    
     # Map plot row
     dbc.Row([
-        dbc.Col(dcc.Graph(id='map-plot'), width=12)
+        dbc.Col(dcc.Graph(id='map-plot', style={'height': '50vh'}), width=12)
     ]),
+    
+    # NOC title search and outlook dropdown row
+    dbc.Row([
+        dbc.Col(dcc.Input(
+            id='noc-title-input',
+            type='text',
+            placeholder='Search for Job Title...',
+            style={'width': '50%', 'margin': 'auto'}
+        ), width=6),
+        dbc.Col(dcc.Dropdown(
+            id='outlook-dropdown', 
+            value=None, 
+            multi=False,  # Allow only one selection
+            clearable=False, 
+            style={'width': '50%', 'margin': 'left'}
+        ), width=6)
+    ]),
+    
+    # Page slider row
+    dbc.Row([
+        dbc.Col(dcc.Slider(
+            id='page-slider',
+            min=1,
+            max=1,
+            step=1,
+            value=1,
+            marks={1: '1'}
+        ), width=12)
+    ]),
+    
     # Bar plot row
     dbc.Row([
-        dbc.Col(dcc.Graph(id='bar-plot'), width=12)
+        dbc.Col(dcc.Graph(id='bar-plot', style={'height': '400px'}), width=12)
+    ]),
+    
+    # Data source row
+    dbc.Row([
+        dbc.Col(html.Div([
+            html.P("Data sourced and provided by the Government of Canada."),
+            html.A("Visit the website", href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank")
+        ], style={'text-align': 'center', 'margin-top': '20px'}), width=12)
+    ]),
+    
+    # Footer row
+    dbc.Row([
+        dbc.Col(html.Footer(), width=10),
+        dbc.Col(dcc.Dropdown(
+            id='language-dropdown',
+            options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
+            value='English',
+            clearable=False,
+            style={'width': '100%'}
+        ), width=2)
     ])
 ], fluid=True)
 
+# Callback to update dropdown options based on selected language
+@app.callback(
+    [Output('region-dropdown', 'options'), Output('region-dropdown', 'value'),
+     Output('outlook-dropdown', 'options'), Output('outlook-dropdown', 'value')],
+    Input('language-dropdown', 'value')
+)
+def update_dropdowns(language):
+    """
+    Update the region and outlook dropdown options based on the selected language.
+
+    Parameters:
+    language (str): The selected language ('English' or 'French').
+
+    Returns:
+    tuple: A tuple containing the dropdown options and default values.
+    """
+    merged_df, outlook_order, _ = load_data(language)
+    
+    # Create options for region dropdown
+    region_options = [{'label': region, 'value': region} for region in sorted(merged_df['ERNAME'].unique())]
+    
+    # Create options for outlook dropdown
+    outlook_options = [{'label': outlook, 'value': outlook} for outlook in outlook_order]
+
+    # Default select first region and first outlook
+    return region_options, merged_df['ERNAME'].iloc[0], outlook_options, outlook_order[0]
+
 # Callback to update the plots based on the selected region
 @app.callback(
-    [Output('map-plot', 'figure'), Output('bar-plot', 'figure')],
-    [Input('region-dropdown', 'value')]
+    [Output('map-plot', 'figure'), Output('bar-plot', 'figure'), Output('page-slider', 'max'), Output('page-slider', 'marks')],
+    [Input('region-dropdown', 'value'), Input('language-dropdown', 'value'), Input('outlook-dropdown', 'value'), Input('noc-title-input', 'value'), Input('page-slider', 'value')]
 )
-def update_plots(selected_region):
+def update_plots(selected_region, language, selected_outlook, noc_title, page):
     """
     Update the map and bar plots based on the selected region.
 
     Parameters:
     selected_region (str): The selected economic region.
+    language (str): The selected language ('English' or 'French').
+    selected_outlook (str): The selected outlook category.
+    noc_title (str): The NOC title to search for.
+    page (int): The current page number.
 
     Returns:
-    tuple: A tuple containing the updated map and bar plot figures.
+    tuple: A tuple containing the updated map and bar plot figures, maximum page number, and slider marks.
     """
-    # Load the data for the selected language (English in this case)
-    merged_df, outlook_order, outlook_colors = load_data('English')
+    merged_df, outlook_order, outlook_colors = load_data(language)
+
+    # Ensure selected_outlook is a string
+    if not selected_outlook:
+        selected_outlook = outlook_order[0]  # Default to the first outlook
 
     # Filter the geographical data for the selected region
     filtered_gdf = gdf[gdf['ERNAME'] == selected_region]
 
-    # Filter the merged data for the selected region
-    filtered_data = merged_df[merged_df['ERNAME'] == selected_region]
+    # Filter the merged data for the selected region and outlook
+    filtered_data = merged_df[(merged_df['ERNAME'] == selected_region) & (merged_df['Outlook'] == selected_outlook)]
+
+    # Filter by NOC title if provided
+    if noc_title:
+        filtered_data = filtered_data[filtered_data['NOC Title'].str.contains(noc_title, case=False, na=False)]
+
+    # Pagination logic
+    items_per_page = 10
+    total_pages = (len(filtered_data) + items_per_page - 1) // items_per_page
+    start_idx = (page - 1) * items_per_page
+    end_idx = start_idx + items_per_page
+    paginated_data = filtered_data.iloc[start_idx:end_idx]
 
     # Create the map plot
     map_fig = px.choropleth_mapbox(
@@ -139,15 +229,45 @@ def update_plots(selected_region):
 
     # Create the bar plot with descending order for 'Outlook'
     bar_fig = px.bar(
-        filtered_data,
+        paginated_data,
         x='NOC Title',
         y='Outlook',
         color='Outlook',
         color_discrete_map=outlook_colors,
-        category_orders={'Outlook': outlook_order[::1]}  # Reverse the order for descending sorting
+        category_orders={'Outlook': outlook_order},
+        hover_data={'NOC Title': True}  # Ensure full text is shown on hover
     )
 
-    return map_fig, bar_fig
+    # Force the y-axis to display all categories even if there is no data for some
+    bar_fig.update_yaxes(
+        tickmode='array',
+        tickvals=outlook_order,
+        ticktext=outlook_order
+    )
+
+    # Update layout for hover text and hide the legend
+    bar_fig.update_layout(
+        title=f"Job Outlooks in {selected_region}",
+        showlegend=False,  # Hide the legend
+        hoverlabel=dict(
+            font_size=16,  # Larger hover text
+            font_family="Arial"
+        ),
+        xaxis_tickangle=-45,  # Rotate labels to avoid overlap
+        xaxis=dict(
+            title_font=dict(size=18),  # Increase x-axis title font size
+            tickfont=dict(size=14)  # Increase x-axis tick font size
+        ),
+        yaxis=dict(
+            title_font=dict(size=18),  # Increase y-axis title font size
+            tickfont=dict(size=14)  # Increase y-axis tick font size
+        )
+    )
+
+    # Update slider marks
+    slider_marks = {i: str(i) for i in range(1, total_pages + 1)}
+
+    return map_fig, bar_fig, total_pages, slider_marks
 
 # Run the app
 if __name__ == '__main__':
