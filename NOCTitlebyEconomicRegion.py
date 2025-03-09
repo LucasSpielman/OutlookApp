@@ -1,6 +1,6 @@
 import dash  # Import Dash for creating the web application
 import dash_bootstrap_components as dbc  # Import Bootstrap components for styling
-from dash import dcc, html, Input, Output  # Import core Dash components and callback functions
+from dash import dcc, html, Input, Output, State  # Import core Dash components and callback functions
 import plotly.express as px  # Import Plotly Express for creating plots
 import pandas as pd  # Import pandas for data manipulation
 import geopandas as gpd  # Import GeoPandas for handling geographical data
@@ -87,29 +87,43 @@ app.layout = dbc.Container([
     
     # Region dropdown row
     dbc.Row([
-        dbc.Col(dcc.Dropdown(id='region-dropdown', value=None, clearable=False, style={'width': '50%', 'margin': 'left'}), width=6)
-    ], justify='end'),
+        dbc.Col(dcc.Dropdown(
+            id='region-dropdown', 
+            value=None, 
+            clearable=False, 
+            style={'width': '100%', 'margin': 'left'}
+        ), width=6)
+    ], justify='start'),
     
     # Map plot row
     dbc.Row([
         dbc.Col(dcc.Graph(id='map-plot', style={'height': '50vh'}), width=12)
     ]),
     
-    # NOC title search and outlook dropdown row
+    # NOC title search row
     dbc.Row([
         dbc.Col(dcc.Input(
             id='noc-title-input',
             type='text',
             placeholder='Search for Job Title...',
-            style={'width': '50%', 'margin': 'auto'}
-        ), width=6),
+            style={'width': '100%', 'margin': 'auto'}
+        ), width=6)
+    ], justify='start'),
+    
+    # Outlook dropdown row
+    dbc.Row([
         dbc.Col(dcc.Dropdown(
             id='outlook-dropdown', 
             value=None, 
             multi=False,  # Allow only one selection
             clearable=False, 
-            style={'width': '50%', 'margin': 'left'}
+            style={'width': '100%', 'margin': 'left'}
         ), width=6)
+    ]),
+    
+    # Bar plot row
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='bar-plot', style={'height': '400px'}), width=12)
     ]),
     
     # Page slider row
@@ -122,11 +136,6 @@ app.layout = dbc.Container([
             value=1,
             marks={1: '1'}
         ), width=12)
-    ]),
-    
-    # Bar plot row
-    dbc.Row([
-        dbc.Col(dcc.Graph(id='bar-plot', style={'height': '400px'}), width=12)
     ]),
     
     # Data source row
@@ -147,7 +156,31 @@ app.layout = dbc.Container([
             clearable=False,
             style={'width': '100%'}
         ), width=2)
-    ])
+    ]),
+    
+    # Modal button and modal
+    dbc.Row([
+        dbc.Col(dbc.Button("About", id="open-modal", color="primary"), width=2),
+        dbc.Modal(
+            [
+                dbc.ModalHeader(dbc.ModalTitle("About This App")),
+                dbc.ModalBody(
+                    """
+                    This Dash app provides an overview of the Canadian job market outlook for 2024-2026. 
+                    The data is sourced from the Government of Canada and provides insights into job outlooks 
+                    across various economic regions. The outlook categories include 'very good', 'good', 
+                    'moderate', 'limited', 'undetermined', and 'None'. The methodology behind the outlook 
+                    can be found on the Job Bank website.
+                    """
+                ),
+                dbc.ModalFooter(
+                    dbc.Button("Close", id="close-modal", className="ms-auto", n_clicks=0)
+                ),
+            ],
+            id="modal",
+            is_open=False,
+        ),
+    ], justify='start', style={'margin-top': '20px'})
 ], fluid=True)
 
 # Callback to update dropdown options based on selected language
@@ -227,6 +260,13 @@ def update_plots(selected_region, language, selected_outlook, noc_title, page):
     )
     map_fig.update_layout(showlegend=False)
 
+    # Function to insert line breaks after every word
+    def insert_line_breaks(text):
+        return '<br>'.join(text.split())
+
+    # Apply the function to the 'NOC Title' column
+    paginated_data['NOC Title'] = paginated_data['NOC Title'].apply(insert_line_breaks)
+
     # Create the bar plot with descending order for 'Outlook'
     bar_fig = px.bar(
         paginated_data,
@@ -253,7 +293,7 @@ def update_plots(selected_region, language, selected_outlook, noc_title, page):
             font_size=16,  # Larger hover text
             font_family="Arial"
         ),
-        xaxis_tickangle=-45,  # Rotate labels to avoid overlap
+        xaxis_tickangle=0,  # Rotate labels to avoid overlap
         xaxis=dict(
             title_font=dict(size=18),  # Increase x-axis title font size
             tickfont=dict(size=14)  # Increase x-axis tick font size
@@ -268,6 +308,17 @@ def update_plots(selected_region, language, selected_outlook, noc_title, page):
     slider_marks = {i: str(i) for i in range(1, total_pages + 1)}
 
     return map_fig, bar_fig, total_pages, slider_marks
+
+# Callback to toggle the modal
+@app.callback(
+    Output("modal", "is_open"),
+    [Input("open-modal", "n_clicks"), Input("close-modal", "n_clicks")],
+    [State("modal", "is_open")],
+)
+def toggle_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
 
 # Run the app
 if __name__ == '__main__':
