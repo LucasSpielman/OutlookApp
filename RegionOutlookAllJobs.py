@@ -3,6 +3,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html, Input, Output
 import plotly.express as px
 import pandas as pd
+import geopandas as gpd
 
 # Load the Excel file paths
 file_paths = {
@@ -47,6 +48,17 @@ def load_data(language):
     cached_data[language] = (sorted_df, outlook_order, outlook_colors)
     return sorted_df, outlook_order, outlook_colors
 
+# Load the shapefile
+gdf = gpd.read_file("./data/ler_000b16a_e.shp")
+gdf = gdf.to_crs(epsg=4326)  # Ensure the coordinate reference system is WGS84
+
+# Simplify geometries to improve performance
+gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
+
+# Calculate centroids for each region
+gdf['centroid'] = gdf.geometry.centroid
+
+# Initialize the Dash app with the Minty theme
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 
 app.layout = dbc.Container([
