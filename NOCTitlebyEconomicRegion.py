@@ -57,22 +57,31 @@ def load_data(language):
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 
 app.layout = dbc.Container([
-    dcc.Dropdown(
-        id='region-dropdown',
-        options=[{'label': region, 'value': region} for region in gdf['ERNAME'].unique()],
-        value=gdf['ERNAME'].iloc[0],
-        clearable=False
-    ),
-    dcc.Graph(id='map-plot'),
-    dcc.Graph(id='bar-plot')
-])
+    dbc.Row([
+        dbc.Col(html.H1("Canadian Job Outlook sorted by Economic Region 2024-2026", style={'textAlign': 'left', 'margin-top': '20px'}), width=12)
+    ]),
+    dbc.Row([
+        dbc.Col(dcc.Dropdown(
+            id='region-dropdown',
+            options=[{'label': region, 'value': region} for region in gdf['ERNAME'].unique()],
+            value=gdf['ERNAME'].iloc[0],
+            clearable=False
+        ), width=12)
+    ]),
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='map-plot'), width=12)
+    ]),
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='bar-plot'), width=12)
+    ])
+], fluid=True)
 
 @app.callback(
     [Output('map-plot', 'figure'), Output('bar-plot', 'figure')],
     [Input('region-dropdown', 'value')]
 )
 def update_plots(selected_region):
-    merged_df, _, outlook_colors = load_data('English')
+    merged_df, outlook_order, outlook_colors = load_data('English')
     filtered_gdf = gdf[gdf['ERNAME'] == selected_region]
     filtered_data = merged_df[merged_df['ERNAME'] == selected_region]
 
@@ -88,7 +97,8 @@ def update_plots(selected_region):
         x='NOC Title',
         y='Outlook',
         color='Outlook',
-        color_discrete_map=outlook_colors
+        color_discrete_map=outlook_colors,
+        category_orders={'Outlook': outlook_order[::-1]}  # Reverse the order for descending sorting
     )
 
     return map_fig, bar_fig
