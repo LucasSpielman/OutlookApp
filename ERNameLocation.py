@@ -61,7 +61,7 @@ def load_data(language):
             'indéterminées': '#BA110C',  # Dark Red
             'bazinga': '#D3D3D3',  # Light Grey
         }
-    df['Economic Region Name'] = df.apply(lambda row: f"{row['Economic Region Name']}, {row['Province']}", axis=1)
+    df['Economic Region Name'] = df['Economic Region Name'].str.split(',').str[0]
     # Convert the 'Outlook' column to a categorical type with the defined order
     df['Outlook'] = pd.Categorical(df['Outlook'], categories=outlook_order, ordered=True)
     
