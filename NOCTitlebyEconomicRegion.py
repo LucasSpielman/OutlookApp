@@ -158,20 +158,37 @@ app.layout = dbc.Container([
         ), width=2)
     ]),
     
-    # Modal button and modal
+    # Modal button and modal page
     dbc.Row([
-        dbc.Col(dbc.Button("About", id="open-modal", color="primary"), width=2),
+        dbc.Col(dbc.Button("Info", id="open-modal", color="primary"), width=2),
         dbc.Modal(
             [
                 dbc.ModalHeader(dbc.ModalTitle("About This App")),
                 dbc.ModalBody(
-                    """
-                    This Dash app provides an overview of the Canadian job market outlook for 2024-2026. 
-                    The data is sourced from the Government of Canada and provides insights into job outlooks 
-                    across various economic regions. The outlook categories include 'very good', 'good', 
-                    'moderate', 'limited', 'undetermined', and 'None'. The methodology behind the outlook 
-                    can be found on the Job Bank website.
-                    """
+                """
+                This Dash app provides an overview of the Canadian job market outlook for 2024-2026. 
+                The data is sourced from the Government of Canada and provides insights into job outlooks 
+                across various economic regions. The outlook categories include 'very good', 'good', 
+                'moderate', 'limited', 'undetermined', and 'None'. 
+
+                **Features:**
+                - **Region Dropdown:** Select an economic region to view its job outlook.
+                - **NOC Title Search:** Search for specific job titles within the selected region.
+                - **Outlook Dropdown:** Filter job titles based on their outlook category.
+                - **Map Plot:** Visual representation of the selected region.
+                - **Bar Plot:** Displays job titles and their outlooks in the selected region.
+                - **Pagination:** Navigate through job titles using the page slider.
+                - **Language Selection:** Switch between English and French data.
+
+                **How to Use:**
+                1. Select a region from the 'Region Dropdown'.
+                2. Optionally, search for a specific job title using the 'NOC Title Search' input.
+                3. Filter the results by selecting an outlook category from the 'Outlook Dropdown'.
+                4. View the map and bar plots to analyze the job outlooks.
+                5. Click on a job title in the bar plot to view detailed employment trends.
+                6. Use the 'Page Slider' to navigate through multiple pages of job titles.
+                7. Switch the language using the 'Language Dropdown' to view data in English or French.
+                """
                 ),
                 dbc.ModalFooter(
                     dbc.Button("Close", id="close-modal", className="ms-auto", n_clicks=0)
@@ -196,6 +213,7 @@ app.layout = dbc.Container([
         ],
         id="trends-modal",
         is_open=False,
+        style={"maxWidth": "100%"}  # Adjust the width of the modal
     ),
 ], fluid=True)
 
