@@ -180,7 +180,23 @@ app.layout = dbc.Container([
             id="modal",
             is_open=False,
         ),
-    ], justify='start', style={'margin-top': '20px'})
+    ], justify='start', style={'margin-top': '20px'}),
+    
+    # Hidden div to store selected NOC Title
+    html.Div(id='selected-noc-title', style={'display': 'none'}),
+    
+    # Modal for Employment Trends
+    dbc.Modal(
+        [
+            dbc.ModalHeader(dbc.ModalTitle("Employment Trends")),
+            dbc.ModalBody(id='employment-trends-body'),
+            dbc.ModalFooter(
+                dbc.Button("Close", id="close-trends-modal", className="ms-auto", n_clicks=0)
+            ),
+        ],
+        id="trends-modal",
+        is_open=False,
+    ),
 ], fluid=True)
 
 # Callback to update dropdown options based on selected language
@@ -260,12 +276,12 @@ def update_plots(selected_region, language, selected_outlook, noc_title, page):
     )
     map_fig.update_layout(showlegend=False)
 
-    # Function to insert line breaks after every word
-    def insert_line_breaks(text):
-        return '<br>'.join(text.split())
+    # # Function to insert line breaks after every word
+    # def insert_line_breaks(text):
+    #     return '<br>'.join(text.split())
 
-    # Apply the function to the 'NOC Title' column
-    paginated_data['NOC Title'] = paginated_data['NOC Title'].apply(insert_line_breaks)
+    # # Apply the function to the 'NOC Title' column
+    # paginated_data['NOC Title'] = paginated_data['NOC Title'].apply(insert_line_breaks)
 
     # Create the bar plot with descending order for 'Outlook'
     bar_fig = px.bar(
@@ -319,6 +335,33 @@ def toggle_modal(n1, n2, is_open):
     if n1 or n2:
         return not is_open
     return is_open
+
+# Callback to update the hidden div with the selected NOC Title
+@app.callback(
+    Output('selected-noc-title', 'children'),
+    Input('bar-plot', 'clickData')
+)
+def update_selected_noc_title(clickData):
+    if clickData:
+        return clickData['points'][0]['x']
+    return ''
+
+# Callback to toggle the Employment Trends modal and display the data
+@app.callback(
+    Output("trends-modal", "is_open"),
+    Output("employment-trends-body", "children"),
+    [Input('selected-noc-title', 'children'), Input("close-trends-modal", "n_clicks")],
+    [State("trends-modal", "is_open"), State('language-dropdown', 'value')]
+)
+def toggle_trends_modal(noc_title, n_clicks, is_open, language):
+    if noc_title and not is_open:
+        merged_df, _, _ = load_data(language)
+        trends_data = merged_df[merged_df['NOC Title'] == noc_title]['Employment Trends'].values[0]
+        trends_body = dcc.Markdown(trends_data, dangerously_allow_html=True)
+        return True, trends_body
+    if n_clicks:
+        return False, ''
+    return is_open, ''
 
 # Run the app
 if __name__ == '__main__':
