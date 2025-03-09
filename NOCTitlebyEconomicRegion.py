@@ -262,11 +262,14 @@ def update_plots(selected_region, language, selected_outlook, noc_title, page):
         filtered_data = filtered_data[filtered_data['NOC Title'].str.contains(noc_title, case=False, na=False)]
 
     # Pagination logic
-    items_per_page = 10
+    items_per_page = 5
     total_pages = (len(filtered_data) + items_per_page - 1) // items_per_page
     start_idx = (page - 1) * items_per_page
     end_idx = start_idx + items_per_page
     paginated_data = filtered_data.iloc[start_idx:end_idx]
+
+    # Truncate NOC Title to 38 characters
+    # paginated_data['NOC Title'] = paginated_data['NOC Title'].apply(lambda x: x if len(x) <= 38 else x[:35] + '...')
 
     # Create the map plot
     map_fig = px.choropleth_mapbox(
@@ -275,13 +278,6 @@ def update_plots(selected_region, language, selected_outlook, noc_title, page):
         zoom=6, hover_name='ERNAME', opacity=0.5
     )
     map_fig.update_layout(showlegend=False)
-
-    # # Function to insert line breaks after every word
-    # def insert_line_breaks(text):
-    #     return '<br>'.join(text.split())
-
-    # # Apply the function to the 'NOC Title' column
-    # paginated_data['NOC Title'] = paginated_data['NOC Title'].apply(insert_line_breaks)
 
     # Create the bar plot with descending order for 'Outlook'
     bar_fig = px.bar(
