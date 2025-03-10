@@ -99,15 +99,6 @@ def create_page_slider():
         dbc.Col(dcc.Slider(id='page-slider-1', min=1, max=1, step=1, value=1, marks={1: '1'}), width=12)
     ])
 
-def create_data_source_row():
-    return dbc.Row([
-        dbc.Col(html.Div([
-            html.P(id='data-source-text-1', style={'text-align': 'center', 'margin-top': '10px'}),
-            html.A(id='visit-website-link-1', href="", target="_blank", style={'display': 'inline-block', 'text-align': 'center', 'margin-top': '5px'}),
-            html.A(id='open-data-link-1', href="", target="_blank", style={'display': 'inline-block', 'text-align': 'center', 'margin-top': '5px', 'margin-left': '10px'})
-        ], style={'text-align': 'center'}), width=12)
-    ], style={'margin-left': '0', 'margin-right': '0'})
-
 def create_language_dropdown_row():
     return dbc.Row([
         dbc.Col(dcc.Dropdown(
@@ -153,7 +144,6 @@ def create_layout():
         create_outlook_dropdown(),
         create_bar_plot(),
         create_page_slider(),
-        # create_data_source_row(),
         create_footer(),
         create_info_modal(),
         create_hidden_div(),
@@ -171,18 +161,13 @@ def init_app():
 def register_callbacks(app):
     @app.callback(
         [Output('app-title-1', 'children'),
-        Output('data-source-text-1', 'children'),
-        Output('visit-website-link-1', 'children'),
-        Output('visit-website-link-1', 'href'),
-        Output('open-data-link-1', 'children'),
-        Output('open-data-link-1', 'href'),
         Output('modal-info-text-1', 'children'),
         Output('noc-title-input-1', 'placeholder')],
         Input('language-dropdown-1', 'value')
     )
     def update_text_content_1(language):
         content = text_content_noc()[language]
-        return (content['title'], content['data_source'], content['visit_website'], content['visit_website_link'], content['open_data'], content['open_data_link'], content['modal_info'], content['noc_title_placeholder'])
+        return (content['title'], content['modal_info'], content['noc_title_placeholder'])
 
     @app.callback(
         [Output('region-dropdown-1', 'options'), Output('region-dropdown-1', 'value'),
