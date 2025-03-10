@@ -19,36 +19,32 @@ def load_data(language):
         return CACHED_DATA[language]
     
     df = pd.read_excel(FILE_PATHS[language])
-    
     outlook_order, outlook_colors = get_outlook_config(language)
-    
     df['Outlook'] = pd.Categorical(df['Outlook'], categories=outlook_order, ordered=True)
     sorted_df = df.sort_values(by=['NOC Title', 'Economic Region Name', 'Outlook'])
-    
     CACHED_DATA[language] = (sorted_df, outlook_order, outlook_colors)
-    
     return sorted_df, outlook_order, outlook_colors
 
 def get_outlook_config(language):
     if language == 'English':
-        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', ' ']
+        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', 'None']
         outlook_colors = {
             'very good': '#30AD23',
             'good': '#1E90FF',
             'moderate': '#FFD700',
             'limited': '#F08315',
             'undetermined': '#BA110C',
-            ' ': '#D3D3D3',
+            'None': '#D3D3D3',
         }
     else:
-        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', ' ']
+        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', 'None']
         outlook_colors = {
             'très bonnes': '#30AD23',
             'bonnes': '#1E90FF',
             'modérées': '#FFD700',
             'limitées': '#F08315',
             'indéterminées': '#BA110C',
-            ' ': '#D3D3D3',
+            'None': '#D3D3D3',
         }
     return outlook_order, outlook_colors
 
@@ -59,18 +55,7 @@ def load_geodata():
     gdf['centroid'] = gdf.geometry.centroid
     return gdf
 
-def create_layout():
-    return dbc.Container([
-        create_title_row(),
-        create_noc_dropdown_row(),
-        create_map_plot_row(),
-        create_region_dropdown_row(),
-        create_bar_plot_row(),
-        create_data_source_row(),
-        create_language_dropdown_row(),
-        create_info_modal(),
-        create_trends_modal()
-    ], fluid=True)
+GDF = load_geodata()
 
 def create_title_row():
     return dbc.Row([
@@ -103,7 +88,7 @@ def create_region_dropdown_row():
             clearable=True,
             placeholder="Select Economic Region",
             style={'width': '100%', 'margin-top': '20px'}
-        ), width=12)
+        ), width=3)
     ], style={'margin-left': '0', 'margin-right': '0'})
 
 def create_bar_plot_row():
@@ -123,8 +108,8 @@ def create_language_dropdown_row():
             options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
             value='English',
             clearable=False,
-            style={'width': '150px', 'margin-right': 'auto', 'margin-left': 'auto'}
-        ), width=3, style={'margin-left': 'auto'})
+            style={'width': '100%', 'margin-right': 'auto', 'margin-left': 'auto'}
+        ), width=1, style={'margin-left': 'auto'})
     ], style={'position': 'absolute', 'bottom': '20px', 'width': '100%', 'left': '0', 'right': '0'})
 
 def create_info_modal():
@@ -149,6 +134,20 @@ def toggle_info_modal(n1, n2, is_open):
     if n1 or n2:
         return not is_open
     return is_open
+
+def create_layout():
+    return dbc.Container([
+        dcc.Store(id='previous-values', data={'noc': None, 'region': None, 'language': 'English'}),
+        create_title_row(),
+        create_noc_dropdown_row(),
+        create_map_plot_row(),
+        create_region_dropdown_row(),
+        create_bar_plot_row(),
+        create_data_source_row(),
+        create_language_dropdown_row(),
+        create_info_modal(),
+        create_trends_modal()
+    ], fluid=True)
 
 def update_dropdowns(language):
     sorted_df, _, _ = load_data(language)
@@ -215,9 +214,8 @@ def get_language_content(language):
 
 def update_plots(selected_noc, selected_regions, language):
     sorted_df, outlook_order, outlook_colors = load_data(language)
-    gdf = load_geodata()
     
-    merged_df = gdf[['ERNAME', 'centroid']].merge(sorted_df, left_on='ERNAME', right_on='Economic Region Name')
+    merged_df = GDF[['ERNAME', 'centroid']].merge(sorted_df, left_on='ERNAME', right_on='Economic Region Name')
     merged_df['lat'] = merged_df['centroid'].apply(lambda point: point.y)
     merged_df['lon'] = merged_df['centroid'].apply(lambda point: point.x)
     
@@ -281,10 +279,6 @@ def display_trends_modal(map_click, bar_click, close_click, is_open, language):
     
     return True, employment_trends
 
-# Initialize the Dash app with the Minty theme
-# app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
-# layout = create_layout()  # Assign the layout to a variable
-
 def register_callbacks(app):
     app.callback(
         Output("info-modal", "is_open"),
@@ -298,8 +292,9 @@ def register_callbacks(app):
     )(update_dropdowns)
 
     app.callback(
-        [Output('map-plot', 'figure'), Output('bar-plot', 'figure')],
-        [Input('noc-dropdown', 'value'), Input('region-dropdown', 'value'), Input('language-dropdown', 'value')]
+        [Output('map-plot', 'figure'), Output('bar-plot', 'figure'), Output('previous-values', 'data')],
+        [Input('noc-dropdown', 'value'), Input('region-dropdown', 'value'), Input('language-dropdown', 'value')],
+        [State('previous-values', 'data')]
     )(update_plots)
 
     app.callback(
@@ -308,6 +303,27 @@ def register_callbacks(app):
         [Input("map-plot", "clickData"), Input("bar-plot", "clickData"), Input("close-trends-modal", "n_clicks")],
         [State("trends-modal", "is_open"), State("language-dropdown", "value")]
     )(display_trends_modal)
+
+def update_plots(selected_noc, selected_regions, language, previous_values):
+    if (selected_noc == previous_values['noc'] and
+        selected_regions == previous_values['region'] and
+        language == previous_values['language']):
+        raise dash.exceptions.PreventUpdate
+
+    sorted_df, outlook_order, outlook_colors = load_data(language)
+    
+    merged_df = GDF[['ERNAME', 'centroid']].merge(sorted_df, left_on='ERNAME', right_on='Economic Region Name')
+    merged_df['lat'] = merged_df['centroid'].apply(lambda point: point.y)
+    merged_df['lon'] = merged_df['centroid'].apply(lambda point: point.x)
+    
+    filtered_df = merged_df[merged_df['NOC Title'] == selected_noc]
+    if selected_regions and 'All' not in selected_regions:
+        filtered_df = filtered_df[filtered_df['Economic Region Name'].isin(selected_regions)]
+    
+    map_fig = create_map_plot(filtered_df, outlook_order, outlook_colors)
+    bar_fig = create_bar_plot(filtered_df, outlook_order, outlook_colors, language)
+    
+    return map_fig, bar_fig, {'noc': selected_noc, 'region': selected_regions, 'language': language}
 
 def init_app():
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])

@@ -63,56 +63,97 @@ def get_outlook_config(language):
         }
     return outlook_order, outlook_colors
 
-# Define the layout of the app
+def create_header():
+    return dbc.Row([
+        dbc.Col(html.H1(id='app-title-1', style={'textAlign': 'Left', 'margin-top': '30px'}), width=10),
+        dbc.Col(dbc.Button("Info", id="open-modal-1", color="primary"), width=2, style={'textAlign': 'right', 'margin-top': '15px'})
+    ])
+
+def create_region_dropdown():
+    return dbc.Row([
+        dbc.Col(dcc.Dropdown(id='region-dropdown-1', value=None, clearable=False, style={'width': '100%', 'margin': 'left'}), width=3)
+    ], justify='start')
+
+def create_map_plot():
+    return dbc.Row([
+        dbc.Col(dcc.Graph(id='map-plot-1', style={'height': '50vh'}), width=12)
+    ])
+
+def create_noc_title_input():
+    return dbc.Row([
+        dbc.Col(dcc.Input(id='noc-title-input-1', type='text', placeholder='Search for Job Title...', style={'width': '100%', 'margin': 'auto'}), width=3)
+    ], justify='start')
+
+def create_outlook_dropdown():
+    return dbc.Row([
+        dbc.Col(dcc.Dropdown(id='outlook-dropdown-1', value=None, multi=False, clearable=False, style={'width': '100%', 'margin': 'left'}), width=3)
+    ])
+
+def create_bar_plot():
+    return dbc.Row([
+        dbc.Col(dcc.Graph(id='bar-plot-1', style={'height': '400px'}), width=12)
+    ])
+
+def create_page_slider():
+    return dbc.Row([
+        dbc.Col(dcc.Slider(id='page-slider-1', min=1, max=1, step=1, value=1, marks={1: '1'}), width=12)
+    ])
+
+def create_data_source_links():
+    return dbc.Row([
+        dbc.Col(html.Div([
+            html.P(id='data-source-text-1'),
+            html.A(id='visit-website-link-1', href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank"),
+            html.Br(),
+            html.A(id='open-data-link-1', href="https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
+        ], style={'text-align': 'center', 'margin-top': '20px'}), width=12)
+    ])
+
+def create_footer():
+    return dbc.Row([
+        dbc.Col(html.Footer(), width=10),
+        dbc.Col(dcc.Dropdown(
+            id='language-dropdown-1',
+            options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
+            value='English',
+            clearable=False,
+            style={'width': '100%'}
+        ), width=1)
+    ])
+
+def create_info_modal():
+    return dbc.Row([
+        dbc.Modal([
+            dbc.ModalHeader(dbc.ModalTitle("About This App")),
+            dbc.ModalBody(dcc.Markdown(id='modal-info-text-1')),
+            dbc.ModalFooter(dbc.Button("Close", id="close-modal-1", className="ms-auto", n_clicks=0)),
+        ], id="modal-1", is_open=False),
+    ], justify='start', style={'margin-top': '20px'})
+
+def create_trends_modal():
+    return dbc.Modal([
+        dbc.ModalHeader(dbc.ModalTitle("Employment Trends")),
+        dbc.ModalBody(id='employment-trends-body-1'),
+        dbc.ModalFooter(dbc.Button("Close", id="close-trends-modal-1", className="ms-auto", n_clicks=0)),
+    ], id="trends-modal-1", is_open=False, style={"maxWidth": "100%"})
+
+def create_hidden_div():
+    return html.Div(id='selected-noc-title-1', style={'display': 'none'})
+
 def create_layout():
     return dbc.Container([
-        dbc.Row([
-            dbc.Col(html.H1(id='app-title-1', style={'textAlign': 'Left', 'margin-top': '30px'}), width=10),
-            dbc.Col(dbc.Button("Info", id="open-modal-1", color="primary"), width=2, style={'textAlign': 'right', 'margin-top': '15px'})
-        ]),
-        dbc.Row([
-            dbc.Col(dcc.Dropdown(id='region-dropdown-1', value=None, clearable=False, style={'width': '100%', 'margin': 'left'}), width=3)
-        ], justify='start'),
-        dbc.Row([
-            dbc.Col(dcc.Graph(id='map-plot-1', style={'height': '50vh'}), width=12)
-        ]),
-        dbc.Row([
-            dbc.Col(dcc.Input(id='noc-title-input-1', type='text', placeholder='Search for Job Title...', style={'width': '100%', 'margin': 'auto'}), width=3)
-        ], justify='start'),
-        dbc.Row([
-            dbc.Col(dcc.Dropdown(id='outlook-dropdown-1', value=None, multi=False, clearable=False, style={'width': '100%', 'margin': 'left'}), width=3)
-        ]),
-        dbc.Row([
-            dbc.Col(dcc.Graph(id='bar-plot-1', style={'height': '400px'}), width=12)
-        ]),
-        dbc.Row([
-            dbc.Col(dcc.Slider(id='page-slider-1', min=1, max=1, step=1, value=1, marks={1: '1'}), width=12)
-        ]),
-        dbc.Row([
-            dbc.Col(html.Div([
-                html.P(id='data-source-text-1'),
-                html.A(id='visit-website-link-1', href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank"),
-                html.Br(),
-                html.A(id='open-data-link-1', href="https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
-            ], style={'text-align': 'center', 'margin-top': '20px'}), width=12)
-        ]),
-        dbc.Row([
-            dbc.Col(html.Footer(), width=10),
-            dbc.Col(dcc.Dropdown(id='language-dropdown-1', options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}], value='English', clearable=False, style={'width': '100%'}), width=1)
-        ]),
-        dbc.Row([
-            dbc.Modal([
-                dbc.ModalHeader(dbc.ModalTitle("About This App")),
-                dbc.ModalBody(dcc.Markdown(id='modal-info-text-1')),
-                dbc.ModalFooter(dbc.Button("Close", id="close-modal-1", className="ms-auto", n_clicks=0)),
-            ], id="modal-1", is_open=False),
-        ], justify='start', style={'margin-top': '20px'}),
-        html.Div(id='selected-noc-title-1', style={'display': 'none'}),
-        dbc.Modal([
-            dbc.ModalHeader(dbc.ModalTitle("Employment Trends")),
-            dbc.ModalBody(id='employment-trends-body-1'),
-            dbc.ModalFooter(dbc.Button("Close", id="close-trends-modal-1", className="ms-auto", n_clicks=0)),
-        ], id="trends-modal-1", is_open=False, style={"maxWidth": "100%"})
+        create_header(),
+        create_region_dropdown(),
+        create_map_plot(),
+        create_noc_title_input(),
+        create_outlook_dropdown(),
+        create_bar_plot(),
+        create_page_slider(),
+        create_data_source_links(),
+        create_footer(),
+        create_info_modal(),
+        create_hidden_div(),
+        create_trends_modal()
     ], fluid=True)
 
 # Initialize the Dash app
