@@ -79,15 +79,30 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 
 # App layout
 app.layout = dbc.Container([
+    # Title and Info button row
     dbc.Row([
-        dbc.Col(html.H1(id='dashboard-title', style={'textAlign': 'left', 'margin-top': '20px'}), width=6),
+        dbc.Col(html.H1(id='dashboard-title', style={'textAlign': 'left', 'margin-top': '20px'}), width=10),
+        dbc.Col(dbc.Button("Info", id="open-info-modal", color="primary"), width=2, style={'textAlign': 'right', 'margin-top': '20px'})
+    ], style={'margin-left': '0', 'margin-right': '0'}),
+    
+    # NOC Title dropdown row
+    dbc.Row([
         dbc.Col(dcc.Dropdown(
             id='noc-dropdown',
             value=None,  # Default to None until data loads
             multi=False,  # Single selection only
             clearable=False,
             style={'width': '100%', 'margin-top': '20px'}
-        ), width=3),
+        ), width=3)
+    ], style={'margin-left': '0', 'margin-right': '0'}),
+    
+    # Map plot row
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='map-plot', style={'height': '55vh'}), width=12)  # Adjusted height
+    ], style={'margin-left': '0', 'margin-right': '0'}),
+    
+    # Economic Region dropdown row
+    dbc.Row([
         dbc.Col(dcc.Dropdown(
             id='region-dropdown',
             value=['All'],  # Default to 'All'
@@ -95,20 +110,21 @@ app.layout = dbc.Container([
             clearable=True,
             placeholder="Select Economic Region",
             style={'width': '100%', 'margin-top': '20px'}
-        ), width=3)
+        ), width=12)
     ], style={'margin-left': '0', 'margin-right': '0'}),
-    dbc.Row([
-        dbc.Col(dcc.Graph(id='map-plot', style={'height': '60vh'}), width=12)  # Adjusted height
-    ], style={'margin-left': '0', 'margin-right': '0'}),
+    
+    # Bar plot row
     dbc.Row([
         dbc.Col(dcc.Graph(id='bar-plot', style={'height': '20vh'}), width=12)  # Adjusted height
     ], style={'margin-left': '0', 'margin-right': '0'}),
+    
+    # Data source row
     dbc.Row([
-        dbc.Col(html.P(id='data-source', style={'text-align': 'center', 'margin-top': '20px'}), width=12, style={'position': 'absolute', 'bottom': '60px', 'width': '100%'})
+        dbc.Col(html.P(id='data-source', style={'text-align': 'center', 'margin-top': '20px'}), width=12, style={'position': 'absolute', 'bottom': '20px', 'width': '100%'})
     ], style={'margin-left': '0', 'margin-right': '0'}),
+    
     # Footer with language dropdown
     dbc.Row([
-        dbc.Col(html.Button("Info", id="open-info-modal", className="btn btn-info", style={'margin-left': '10px'}), width="auto"),
         dbc.Col(dcc.Dropdown(
             id='language-dropdown',
             options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
@@ -117,6 +133,7 @@ app.layout = dbc.Container([
             style={'width': '150px', 'margin-right': 'auto', 'margin-left': 'auto'}  # Normal width
         ), width=3, style={'margin-left': 'auto'})
     ], style={'position': 'absolute', 'bottom': '20px', 'width': '100%', 'left': '0', 'right': '0'}),
+    
     # Info modal
     dbc.Modal([
         dbc.ModalHeader(id="info-modal-header"),
@@ -124,7 +141,16 @@ app.layout = dbc.Container([
         dbc.ModalFooter(
             dbc.Button(id="close-info-modal", className="ml-auto")
         )
-    ], id="info-modal", is_open=False)
+    ], id="info-modal", is_open=False),
+    
+    # Employment Trends modal
+    dbc.Modal([
+        dbc.ModalHeader("Employment Trends"),
+        dbc.ModalBody(dcc.Markdown(id="employment-trends-body", dangerously_allow_html=True)),
+        dbc.ModalFooter(
+            dbc.Button("Close", id="close-trends-modal", className="ml-auto")
+        )
+    ], id="trends-modal", is_open=False)
 ], fluid=True)
 
 # Callback to toggle the info modal
@@ -226,7 +252,7 @@ def update_plots(selected_noc, selected_regions, language):
     # Create the map plot
     map_fig = px.scatter_mapbox(
         filtered_df, lat='lat', lon='lon', color='Outlook', size_max=13, zoom=3,
-        mapbox_style="carto-positron", center={"lat": 56.1304, "lon": -106.3468},
+        mapbox_style="carto-positron", center={"lat": 60.0, "lon": -106.3468},
         category_orders={'Outlook': outlook_order},
         color_discrete_map=outlook_colors,
         hover_name='Economic Region Name',
@@ -259,6 +285,35 @@ def update_plots(selected_noc, selected_regions, language):
     )  
     
     return map_fig, bar_fig
+
+# Callback to display employment trends modal
+@app.callback(
+    Output("trends-modal", "is_open"),
+    Output("employment-trends-body", "children"),
+    [Input("map-plot", "clickData"), Input("bar-plot", "clickData"), Input("close-trends-modal", "n_clicks")],
+    [State("trends-modal", "is_open"), State("language-dropdown", "value")]
+)
+def display_trends_modal(map_click, bar_click, close_click, is_open, language):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return is_open, ""
+    
+    trigger = ctx.triggered[0]['prop_id'].split('.')[0]
+    
+    if trigger == "close-trends-modal":
+        return False, ""
+    
+    if trigger == "map-plot" and map_click:
+        region_name = map_click['points'][0]['hovertext']
+    elif trigger == "bar-plot" and bar_click:
+        region_name = bar_click['points'][0]['x']
+    else:
+        return is_open, ""
+    
+    sorted_df, _, _ = load_data(language)
+    employment_trends = sorted_df[sorted_df['Economic Region Name'] == region_name]['Employment Trends'].values[0]
+    
+    return True, employment_trends
 
 # Run the app
 if __name__ == '__main__':
