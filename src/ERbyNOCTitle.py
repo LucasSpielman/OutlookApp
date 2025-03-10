@@ -144,7 +144,7 @@ def create_layout():
         create_map_plot_row(),
         create_region_dropdown_row(),
         create_bar_plot_row(),
-        create_data_source_row(),
+        # create_data_source_row(),
         create_language_dropdown_row(),
         create_info_modal(),
         create_trends_modal()

@@ -99,15 +99,14 @@ def create_page_slider():
         dbc.Col(dcc.Slider(id='page-slider-1', min=1, max=1, step=1, value=1, marks={1: '1'}), width=12)
     ])
 
-def create_data_source_links():
+def create_data_source_row():
     return dbc.Row([
         dbc.Col(html.Div([
-            html.P(id='data-source-text-1'),
-            html.A(id='visit-website-link-1', href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank"),
-            html.Br(),
-            html.A(id='open-data-link-1', href="https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
-        ], style={'text-align': 'center', 'margin-top': '20px'}), width=12)
-    ])
+            html.P(id='data-source-text-1', style={'text-align': 'center', 'margin-top': '10px'}),
+            html.A(id='visit-website-link-1', href="", target="_blank", style={'display': 'inline-block', 'text-align': 'center', 'margin-top': '5px'}),
+            html.A(id='open-data-link-1', href="", target="_blank", style={'display': 'inline-block', 'text-align': 'center', 'margin-top': '5px', 'margin-left': '10px'})
+        ], style={'text-align': 'center'}), width=12)
+    ], style={'margin-left': '0', 'margin-right': '0'})
 
 def create_language_dropdown_row():
     return dbc.Row([
@@ -154,7 +153,7 @@ def create_layout():
         create_outlook_dropdown(),
         create_bar_plot(),
         create_page_slider(),
-        create_data_source_links(),
+        # create_data_source_row(),
         create_footer(),
         create_info_modal(),
         create_hidden_div(),

@@ -2,6 +2,9 @@ import dash
 from dash import html, dcc, Input, Output, State
 import dash_bootstrap_components as dbc
 
+from ERbyNOCTitle import create_data_source_row
+from text_content import text_content_noc
+
 # Import your two existing Dash app layouts and callbacks
 from ERbyNOCTitle import create_layout as create_layout1
 from ERbyNOCTitle import register_callbacks as register_callbacks1
@@ -31,7 +34,8 @@ main_layout = html.Div([
         dcc.Tab(label='Canadian Job Market Outlook', value='tab1'),
         dcc.Tab(label='Canadian Economic Region Outlook', value='tab2')
     ]),
-    html.Div(id='tabs-content')
+    html.Div(id='tabs-content'),
+    create_data_source_row()  # Add the data source row here
 ])
 
 # Define the callback to switch tabs
