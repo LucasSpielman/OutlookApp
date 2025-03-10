@@ -4,3 +4,4 @@ pandas
 plotly
 beautifulsoup4
 openpyxl
+geopandas
