@@ -91,7 +91,7 @@ def create_outlook_dropdown():
 
 def create_bar_plot():
     return dbc.Row([
-        dbc.Col(dcc.Graph(id='bar-plot-1', style={'height': '400px'}), width=12)
+        dbc.Col(dcc.Graph(id='bar-plot-1', style={'height': '350px'}), width=12)  # Reduced height from 400px to 350px
     ])
 
 def create_page_slider():
@@ -109,16 +109,21 @@ def create_data_source_links():
         ], style={'text-align': 'center', 'margin-top': '20px'}), width=12)
     ])
 
-def create_footer():
+def create_language_dropdown_row():
     return dbc.Row([
-        dbc.Col(html.Footer(), width=10),
         dbc.Col(dcc.Dropdown(
             id='language-dropdown-1',
             options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
             value='English',
             clearable=False,
-            style={'width': '100%'}
-        ), width=1)
+            style={'width': '100%', 'margin-right': 'auto', 'margin-left': 'auto'}
+        ), width=1, style={'margin-left': 'auto'})
+    ], style={'position': 'absolute', 'bottom': '20px', 'width': '100%', 'left': '0', 'right': '0'})
+
+def create_footer():
+    return dbc.Row([
+        dbc.Col(html.Footer(), width=10),
+        create_language_dropdown_row()
     ])
 
 def create_info_modal():

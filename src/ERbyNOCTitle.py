@@ -249,13 +249,16 @@ def create_map_plot(filtered_df, outlook_order, outlook_colors):
     )
 
 def create_bar_plot(filtered_df, outlook_order, outlook_colors, language):
-    bar_labels = {'x': 'Economic Region Name', 'y': 'Outlook'} if language == 'English' else {'x': 'Nom de la région économique', 'y': 'Perspectives'}
+    bar_labels = {'x': ' ', 'y': 'Outlook'} if language == 'English' else {'x': ' ', 'y': 'Perspectives'}
     return px.bar(
         filtered_df, x='Economic Region Name', y='Outlook', color='Outlook',
         labels=bar_labels,
         category_orders={'Outlook': outlook_order},
         color_discrete_map=outlook_colors
-    ).update_layout(showlegend=False)
+    ).update_layout(
+        showlegend=False,
+        xaxis_title=''  # Remove x-axis label
+    )
 
 def display_trends_modal(map_click, bar_click, close_click, is_open, language):
     ctx = dash.callback_context
