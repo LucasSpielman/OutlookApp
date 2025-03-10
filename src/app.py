@@ -1,27 +1,14 @@
-import dash
-from dash import dcc, html
-from src.pages.NOCTitlebyER import app1_layout
-from src.pages.ERbyNOCTitle import app2_layout
+from flask import Flask
+from NOCTitlebyER import create_dash_app as create_dash_app1
+from ERbyNOCTitle import create_dash_app as create_dash_app2
 
-app = dash.Dash(__name__)
+# Initialize the Flask app
+server = Flask(__name__)
 
-app.layout = html.Div([
-    dcc.Tabs(id='tabs', value='tab1', children=[
-        dcc.Tab(label='App 1', value='tab1'),
-        dcc.Tab(label='App 2', value='tab2'),
-    ]),
-    html.Div(id='tabs-content')
-])
+# Create and integrate the Dash apps into the Flask server
+app1 = create_dash_app1(server)
+app2 = create_dash_app2(server)
 
-@app.callback(
-    dash.dependencies.Output('tabs-content', 'children'),
-    [dash.dependencies.Input('tabs', 'value')]
-)
-def render_content(tab):
-    if tab == 'tab1':
-        return app1_layout
-    elif tab == 'tab2':
-        return app2_layout
-
+# Running the Flask app
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    server.run(debug=True)
