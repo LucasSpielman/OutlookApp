@@ -1,14 +1,20 @@
-from flask import Flask
-from NOCTitlebyER import create_dash_app as create_dash_app1
-from ERbyNOCTitle import create_dash_app as create_dash_app2
+# app.py
+import dash
+from dash import dcc, html
+from NOCTitlebyER import app as NOC_app  # Import NOC_app
+from ERbyNOCTitle import app as ER_app  # Import ER_app
 
-# Initialize the Flask app
-server = Flask(__name__)
+# Create your main Dash app
+app = dash.Dash(__name__)
 
-# Create and integrate the Dash apps into the Flask server
-app1 = create_dash_app1(server)
-app2 = create_dash_app2(server)
+# Define the layout with Tabs
+app.layout = html.Div([
+    dcc.Tabs([
+        dcc.Tab(label='Dashboard 1', children=[NOC_app.layout]),  # Use the layout from NOC_app
+        dcc.Tab(label='Dashboard 2', children=[ER_app.layout])    # Use the layout from ER_app
+    ])
+])
 
-# Running the Flask app
+# Run the app
 if __name__ == '__main__':
-    server.run(debug=True)
+    app.run_server(debug=True)
