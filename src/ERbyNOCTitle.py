@@ -15,173 +15,149 @@ file_paths = {
 cached_data = {}
 
 def load_data(language):
-    """
-    Load the data from the Excel file based on the selected language.
-    Cache the data to avoid reloading it multiple times.
-
-    Parameters:
-    language (str): The selected language ('English' or 'French').
-
-    Returns:
-    tuple: A tuple containing the sorted DataFrame, outlook order, and outlook colors.
-    """
     if language in cached_data:
         return cached_data[language]
     
-    # Read the Excel file
     df = pd.read_excel(file_paths[language])
     
-    # Define the outlook order and colors based on the language
-    if language == 'English':
-        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', ' ']
-        outlook_colors = {
-            'very good': '#30AD23',  # Warm green 
-            'good': '#1E90FF',  # Dodger Blue
-            'moderate': '#FFD700',  # Gold
-            'limited': '#F08315',  # Warm Orange
-            'undetermined': '#BA110C',  # Dark Red
-            ' ': '#D3D3D3',  # Light Grey
-        }
-    else:  # French
-        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', ' ']
-        outlook_colors = {
-            'très bonnes': '#30AD23',  # Warm Green
-            'bonnes': '#1E90FF',  # Dodger Blue
-            'modérées': '#FFD700',  # Gold
-            'limitées': '#F08315',  # Warm Orange
-            'indéterminées': '#BA110C',  # Dark Red
-            ' ': '#D3D3D3',  # Light Grey
-        }
+    outlook_order, outlook_colors = get_outlook_config(language)
     
-    # Convert the 'Outlook' column to a categorical type with the defined order
     df['Outlook'] = pd.Categorical(df['Outlook'], categories=outlook_order, ordered=True)
-    
-    # Sort the DataFrame by 'NOC Title', 'Economic Region Name', and 'Outlook'
     sorted_df = df.sort_values(by=['NOC Title', 'Economic Region Name', 'Outlook'])
     
-    # Cache the data
     cached_data[language] = (sorted_df, outlook_order, outlook_colors)
     
     return sorted_df, outlook_order, outlook_colors
 
-# Load the shapefile
-gdf = gpd.read_file("./data/ler_000b16a_e.shp")
-gdf = gdf.to_crs(epsg=4326)  # Ensure the coordinate reference system is WGS84
+def get_outlook_config(language):
+    if language == 'English':
+        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', ' ']
+        outlook_colors = {
+            'very good': '#30AD23',
+            'good': '#1E90FF',
+            'moderate': '#FFD700',
+            'limited': '#F08315',
+            'undetermined': '#BA110C',
+            ' ': '#D3D3D3',
+        }
+    else:
+        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', ' ']
+        outlook_colors = {
+            'très bonnes': '#30AD23',
+            'bonnes': '#1E90FF',
+            'modérées': '#FFD700',
+            'limitées': '#F08315',
+            'indéterminées': '#BA110C',
+            ' ': '#D3D3D3',
+        }
+    return outlook_order, outlook_colors
 
-# Simplify geometries to improve performance
-gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
+def load_geodata():
+    gdf = gpd.read_file("./data/ler_000b16a_e.shp")
+    gdf = gdf.to_crs(epsg=4326)
+    gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
+    gdf['centroid'] = gdf.geometry.centroid
+    return gdf
 
-# Calculate centroids for each region
-gdf['centroid'] = gdf.geometry.centroid
+def create_layout():
+    return dbc.Container([
+        create_title_row(),
+        create_noc_dropdown_row(),
+        create_map_plot_row(),
+        create_region_dropdown_row(),
+        create_bar_plot_row(),
+        create_data_source_row(),
+        create_language_dropdown_row(),
+        create_info_modal(),
+        create_trends_modal()
+    ], fluid=True)
 
-# Initialize the Dash app with the Minty theme
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
-
-# App layout
-app.layout = dbc.Container([
-    # Title and Info button row
-    dbc.Row([
+def create_title_row():
+    return dbc.Row([
         dbc.Col(html.H1(id='dashboard-title', style={'textAlign': 'left', 'margin-top': '20px'}), width=10),
         dbc.Col(dbc.Button("Info", id="open-info-modal", color="primary"), width=2, style={'textAlign': 'right', 'margin-top': '20px'})
-    ], style={'margin-left': '0', 'margin-right': '0'}),
-    
-    # NOC Title dropdown row
-    dbc.Row([
+    ], style={'margin-left': '0', 'margin-right': '0'})
+
+def create_noc_dropdown_row():
+    return dbc.Row([
         dbc.Col(dcc.Dropdown(
             id='noc-dropdown',
-            value=None,  # Default to None until data loads
-            multi=False,  # Single selection only
+            value=None,
+            multi=False,
             clearable=False,
             style={'width': '100%', 'margin-top': '20px'}
         ), width=3)
-    ], style={'margin-left': '0', 'margin-right': '0'}),
-    
-    # Map plot row
-    dbc.Row([
-        dbc.Col(dcc.Graph(id='map-plot', style={'height': '55vh'}), width=12)  # Adjusted height
-    ], style={'margin-left': '0', 'margin-right': '0'}),
-    
-    # Economic Region dropdown row
-    dbc.Row([
+    ], style={'margin-left': '0', 'margin-right': '0'})
+
+def create_map_plot_row():
+    return dbc.Row([
+        dbc.Col(dcc.Graph(id='map-plot', style={'height': '55vh'}), width=12)
+    ], style={'margin-left': '0', 'margin-right': '0'})
+
+def create_region_dropdown_row():
+    return dbc.Row([
         dbc.Col(dcc.Dropdown(
             id='region-dropdown',
-            value=['All'],  # Default to 'All'
-            multi=True,  # Allow multiple selections
+            value=['All'],
+            multi=True,
             clearable=True,
             placeholder="Select Economic Region",
             style={'width': '100%', 'margin-top': '20px'}
         ), width=12)
-    ], style={'margin-left': '0', 'margin-right': '0'}),
-    
-    # Bar plot row
-    dbc.Row([
-        dbc.Col(dcc.Graph(id='bar-plot', style={'height': '20vh'}), width=12)  # Adjusted height
-    ], style={'margin-left': '0', 'margin-right': '0'}),
-    
-    # Data source row
-    dbc.Row([
+    ], style={'margin-left': '0', 'margin-right': '0'})
+
+def create_bar_plot_row():
+    return dbc.Row([
+        dbc.Col(dcc.Graph(id='bar-plot', style={'height': '20vh'}), width=12)
+    ], style={'margin-left': '0', 'margin-right': '0'})
+
+def create_data_source_row():
+    return dbc.Row([
         dbc.Col(html.P(id='data-source', style={'text-align': 'center', 'margin-top': '20px'}), width=12, style={'position': 'absolute', 'bottom': '20px', 'width': '100%'})
-    ], style={'margin-left': '0', 'margin-right': '0'}),
-    
-    # Footer with language dropdown
-    dbc.Row([
+    ], style={'margin-left': '0', 'margin-right': '0'})
+
+def create_language_dropdown_row():
+    return dbc.Row([
         dbc.Col(dcc.Dropdown(
             id='language-dropdown',
             options=[{'label': 'English', 'value': 'English'}, {'label': 'Français', 'value': 'French'}],
             value='English',
             clearable=False,
-            style={'width': '150px', 'margin-right': 'auto', 'margin-left': 'auto'}  # Normal width
+            style={'width': '150px', 'margin-right': 'auto', 'margin-left': 'auto'}
         ), width=3, style={'margin-left': 'auto'})
-    ], style={'position': 'absolute', 'bottom': '20px', 'width': '100%', 'left': '0', 'right': '0'}),
-    
-    # Info modal
-    dbc.Modal([
+    ], style={'position': 'absolute', 'bottom': '20px', 'width': '100%', 'left': '0', 'right': '0'})
+
+def create_info_modal():
+    return dbc.Modal([
         dbc.ModalHeader(id="info-modal-header"),
         dbc.ModalBody(dcc.Markdown(id="info-modal-body")),
         dbc.ModalFooter(
             dbc.Button(id="close-info-modal", className="ml-auto")
         )
-    ], id="info-modal", is_open=False),
-    
-    # Employment Trends modal
-    dbc.Modal([
+    ], id="info-modal", is_open=False)
+
+def create_trends_modal():
+    return dbc.Modal([
         dbc.ModalHeader("Employment Trends"),
         dbc.ModalBody(dcc.Markdown(id="employment-trends-body", dangerously_allow_html=True)),
         dbc.ModalFooter(
             dbc.Button("Close", id="close-trends-modal", className="ml-auto")
         )
     ], id="trends-modal", is_open=False)
-], fluid=True)
 
-# Callback to toggle the info modal
-@app.callback(
-    Output("info-modal", "is_open"),
-    [Input("open-info-modal", "n_clicks"), Input("close-info-modal", "n_clicks")],
-    [State("info-modal", "is_open")]
-)
 def toggle_info_modal(n1, n2, is_open):
     if n1 or n2:
         return not is_open
     return is_open
 
-# Callback to update data when language is switched
-@app.callback(
-    [Output('noc-dropdown', 'options'), Output('noc-dropdown', 'value'), Output('region-dropdown', 'options'), Output('dashboard-title', 'children'), Output('info-modal-header', 'children'), Output('info-modal-body', 'children'), Output('close-info-modal', 'children'), Output('data-source', 'children')],
-    Input('language-dropdown', 'value')
-)
 def update_dropdowns(language):
-    """
-    Update the NOC and region dropdown options and values based on the selected language.
-
-    Parameters:
-    language (str): The selected language ('English' or 'French').
-
-    Returns:
-    tuple: A tuple containing the dropdown options and the first NOC title as the default value.
-    """
     sorted_df, _, _ = load_data(language)
     noc_options = [{'label': title, 'value': title} for title in sorted(sorted_df['NOC Title'].unique())]
     region_options = [{'label': 'All', 'value': 'All'}] + [{'label': region, 'value': region} for region in sorted(sorted_df['Economic Region Name'].unique())]
+    title, info_header, info_body, close_button, data_source = get_language_content(language)
+    return noc_options, sorted_df['NOC Title'].iloc[0], region_options, title, info_header, info_body, close_button, data_source
+
+def get_language_content(language):
     if language == 'English':
         title = "Canadian Job Market Outlook 2024-2026"
         info_header = "About This App"
@@ -235,58 +211,34 @@ def update_dropdowns(language):
             html.Br(),
             html.A("Données ouvertes Canada", href="https://ouvert.canada.ca/data/fr/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
         ]
-    return noc_options, sorted_df['NOC Title'].iloc[0], region_options, title, info_header, info_body, close_button, data_source
+    return title, info_header, info_body, close_button, data_source
 
-# Callback to update both plots based on dropdown selection
-@app.callback(
-    [Output('map-plot', 'figure'), Output('bar-plot', 'figure')],
-    [Input('noc-dropdown', 'value'), Input('region-dropdown', 'value'), Input('language-dropdown', 'value')]
-)
 def update_plots(selected_noc, selected_regions, language):
-    """
-    Update the map and bar plots based on the selected NOC title, regions, and language.
-
-    Parameters:
-    selected_noc (str): The selected NOC title.
-    selected_regions (list): The selected economic regions.
-    language (str): The selected language ('English' or 'French').
-
-    Returns:
-    tuple: A tuple containing the updated map and bar plot figures.
-    """
     sorted_df, outlook_order, outlook_colors = load_data(language)
+    gdf = load_geodata()
     
-    # Merge the sorted DataFrame with the geographical data
     merged_df = gdf[['ERNAME', 'centroid']].merge(sorted_df, left_on='ERNAME', right_on='Economic Region Name')
     merged_df['lat'] = merged_df['centroid'].apply(lambda point: point.y)
     merged_df['lon'] = merged_df['centroid'].apply(lambda point: point.x)
     
-    # Filter the DataFrame by the selected NOC title and regions
     filtered_df = merged_df[merged_df['NOC Title'] == selected_noc]
     if selected_regions and 'All' not in selected_regions:
         filtered_df = filtered_df[filtered_df['Economic Region Name'].isin(selected_regions)]
     
-    # Create the map plot
-    map_fig = px.scatter_mapbox(
+    map_fig = create_map_plot(filtered_df, outlook_order, outlook_colors)
+    bar_fig = create_bar_plot(filtered_df, outlook_order, outlook_colors, language)
+    
+    return map_fig, bar_fig
+
+def create_map_plot(filtered_df, outlook_order, outlook_colors):
+    return px.scatter_mapbox(
         filtered_df, lat='lat', lon='lon', color='Outlook', size_max=13, zoom=3,
         mapbox_style="carto-positron", center={"lat": 60.0, "lon": -106.3468},
         category_orders={'Outlook': outlook_order},
         color_discrete_map=outlook_colors,
         hover_name='Economic Region Name',
         size=[6.5] * len(filtered_df)
-    )
-    
-    # Create the bar plot
-    bar_labels = {'x': 'Economic Region Name', 'y': 'Outlook'} if language == 'English' else {'x': 'Nom de la région économique', 'y': 'Perspectives'}
-    bar_fig = px.bar(
-        filtered_df, x='Economic Region Name', y='Outlook', color='Outlook',
-        labels=bar_labels,
-        category_orders={'Outlook': outlook_order},
-        color_discrete_map=outlook_colors
-    )
-    
-    # Sync legend across both plots
-    map_fig.update_layout(
+    ).update_layout(
         showlegend=True,
         legend=dict(
             x=0.01,
@@ -297,19 +249,16 @@ def update_plots(selected_noc, selected_regions, language):
             borderwidth=1
         )
     )
-    bar_fig.update_layout(
-        showlegend=False
-    )  
-    
-    return map_fig, bar_fig
 
-# Callback to display employment trends modal
-@app.callback(
-    Output("trends-modal", "is_open"),
-    Output("employment-trends-body", "children"),
-    [Input("map-plot", "clickData"), Input("bar-plot", "clickData"), Input("close-trends-modal", "n_clicks")],
-    [State("trends-modal", "is_open"), State("language-dropdown", "value")]
-)
+def create_bar_plot(filtered_df, outlook_order, outlook_colors, language):
+    bar_labels = {'x': 'Economic Region Name', 'y': 'Outlook'} if language == 'English' else {'x': 'Nom de la région économique', 'y': 'Perspectives'}
+    return px.bar(
+        filtered_df, x='Economic Region Name', y='Outlook', color='Outlook',
+        labels=bar_labels,
+        category_orders={'Outlook': outlook_order},
+        color_discrete_map=outlook_colors
+    ).update_layout(showlegend=False)
+
 def display_trends_modal(map_click, bar_click, close_click, is_open, language):
     ctx = dash.callback_context
     if not ctx.triggered:
@@ -331,6 +280,34 @@ def display_trends_modal(map_click, bar_click, close_click, is_open, language):
     employment_trends = sorted_df[sorted_df['Economic Region Name'] == region_name]['Employment Trends'].values[0]
     
     return True, employment_trends
+
+# Initialize the Dash app with the Minty theme
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
+app.layout = create_layout()
+
+# Callbacks
+app.callback(
+    Output("info-modal", "is_open"),
+    [Input("open-info-modal", "n_clicks"), Input("close-info-modal", "n_clicks")],
+    [State("info-modal", "is_open")]
+)(toggle_info_modal)
+
+app.callback(
+    [Output('noc-dropdown', 'options'), Output('noc-dropdown', 'value'), Output('region-dropdown', 'options'), Output('dashboard-title', 'children'), Output('info-modal-header', 'children'), Output('info-modal-body', 'children'), Output('close-info-modal', 'children'), Output('data-source', 'children')],
+    Input('language-dropdown', 'value')
+)(update_dropdowns)
+
+app.callback(
+    [Output('map-plot', 'figure'), Output('bar-plot', 'figure')],
+    [Input('noc-dropdown', 'value'), Input('region-dropdown', 'value'), Input('language-dropdown', 'value')]
+)(update_plots)
+
+app.callback(
+    Output("trends-modal", "is_open"),
+    Output("employment-trends-body", "children"),
+    [Input("map-plot", "clickData"), Input("bar-plot", "clickData"), Input("close-trends-modal", "n_clicks")],
+    [State("trends-modal", "is_open"), State("language-dropdown", "value")]
+)(display_trends_modal)
 
 # Run the app
 if __name__ == '__main__':
