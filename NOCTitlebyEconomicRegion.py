@@ -86,7 +86,9 @@ text_content = {
         'title': "Canadian Job Market Outlook 2024-2026",
         'data_source': "Data sourced and provided by the Government of Canada.",
         'visit_website': "Visit the website",
+        'visit_website_link': "https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1",
         'open_data': "Open Canada Data",
+        'open_data_link': "https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w",
         'noc_title_placeholder': "Search for Job Title...",
         'modal_info': """
             This Dash app provides an overview of the Canadian job market outlook for 2024-2026. 
@@ -119,7 +121,9 @@ text_content = {
         'title': "Perspectives du marché du travail canadien 2024-2026",
         'data_source': "Données fournies par le gouvernement du Canada.",
         'visit_website': "Visitez le site web",
+        'visit_website_link': "https://www.statcan.gc.ca/fr/sujets/norme/cnp/2021/indexV1",
         'open_data': "Données ouvertes du Canada",
+        'open_data_link': "https://ouvert.canada.ca/data/fr/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w",
         'noc_title_placeholder': "Recherchez un titre d'emploi...",
         'modal_info': """
             Cette application Dash fournit un aperçu des perspectives du marché du travail canadien pour 2024-2026. 
@@ -214,7 +218,6 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col(html.Div([
             html.P(id='data-source-text'),
-            html.Br(),
             html.A(id='visit-website-link', href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank"),
             html.Br(),
             html.A(id='open-data-link', href="https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
@@ -271,14 +274,16 @@ app.layout = dbc.Container([
     [Output('app-title', 'children'),
      Output('data-source-text', 'children'),
      Output('visit-website-link', 'children'),
+     Output('visit-website-link', 'href'),
      Output('open-data-link', 'children'),
+     Output('open-data-link', 'href'),
      Output('modal-info-text', 'children'),
      Output('noc-title-input', 'placeholder')],
     Input('language-dropdown', 'value')
 )
 def update_text_content(language):
     content = text_content[language]
-    return (content['title'], content['data_source'], content['visit_website'], content['open_data'], content['modal_info'], content['noc_title_placeholder'])
+    return (content['title'], content['data_source'], content['visit_website'], content['visit_website_link'], content['open_data'], content['open_data_link'], content['modal_info'], content['noc_title_placeholder'])
 
 # Callback to update dropdown options based on selected language
 @app.callback(
