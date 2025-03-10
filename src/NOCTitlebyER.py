@@ -4,7 +4,7 @@ from dash import dcc, html, Input, Output, State
 import plotly.express as px
 import pandas as pd
 import geopandas as gpd
-from text_content import text_content as text_content_1
+from text_content import text_content_noc
 
 # Constants
 FILE_PATHS = {
@@ -182,7 +182,7 @@ def register_callbacks(app):
         Input('language-dropdown-1', 'value')
     )
     def update_text_content_1(language):
-        content = text_content_1()[language]
+        content = text_content_noc()[language]
         return (content['title'], content['data_source'], content['visit_website'], content['visit_website_link'], content['open_data'], content['open_data_link'], content['modal_info'], content['noc_title_placeholder'])
 
     @app.callback(

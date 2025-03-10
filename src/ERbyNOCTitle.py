@@ -4,6 +4,7 @@ from dash import dcc, html, Input, Output, State
 import plotly.express as px
 import pandas as pd
 import geopandas as gpd
+from text_content import text_content_er
 
 # Load the Excel file paths
 FILE_PATHS = {
@@ -156,60 +157,22 @@ def update_dropdowns(language):
     title, info_header, info_body, close_button, data_source = get_language_content(language)
     return noc_options, sorted_df['NOC Title'].iloc[0], region_options, title, info_header, info_body, close_button, data_source
 
+def text_content():
+    return text_content_er()
+
 def get_language_content(language):
-    if language == 'English':
-        title = "Canadian Job Market Outlook 2024-2026"
-        info_header = "About This App"
-        info_body = (
-            "This dashboard provides an outlook on the Canadian job market for 2024-2026. \n\n"
-            "### Features:\n"
-            "- **NOC Title Dropdown:** Select a National Occupational Classification (NOC) title to view its job outlook.\n"
-            "- **Region Dropdown:** Select one or more economic regions to filter the data.\n"
-            "- **Map Plot:** Displays the geographical distribution of job outlooks across selected regions.\n"
-            "- **Bar Plot:** Shows the job outlook for various economic regions.\n"
-            "- **Language Selection:** Switch between English and French data.\n\n"
-            "### How to Use:\n"
-            "1. Select a NOC title from the 'NOC Title Dropdown'.\n"
-            "2. Optionally, select one or more economic regions from the 'Region Dropdown'.\n"
-            "3. View the map and bar plots to analyze the job outlooks.\n"
-            "4. Click on a region in the map or bar plot to view detailed employment trends.\n"
-            "5. Use the 'Language Dropdown' to switch between English and French data.\n\n"
-        )
-        close_button = "Close"
-        data_source = [
-            "Data sourced and provided by the Government of Canada. ",
-            html.Br(),
-            html.A("Visit the website", href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank"),
-            html.Br(),
-            html.A("Open Canada Data", href="https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
-        ]
-    else:
-        title = "Perspectives du marché du travail canadien 2024-2026"
-        info_header = "À propos de cette application"
-        info_body = (
-            "Ce tableau de bord fournit des perspectives sur le marché du travail canadien pour 2024-2026. \n\n"
-            "### Caractéristiques:\n"
-            "- **Menu déroulant des titres NOC:** Sélectionnez un titre de Classification nationale des professions (CNP) pour voir ses perspectives d'emploi.\n"
-            "- **Menu déroulant des régions:** Sélectionnez une ou plusieurs régions économiques pour filtrer les données.\n"
-            "- **Carte:** Affiche la répartition géographique des perspectives d'emploi dans les régions sélectionnées.\n"
-            "- **Graphique en barres:** Affiche les perspectives d'emploi pour diverses régions économiques.\n"
-            "- **Sélection de la langue:** Passez des données en anglais aux données en français.\n\n"
-            "### Comment utiliser:\n"
-            "1. Sélectionnez un titre NOC dans le 'Menu déroulant des titres NOC'.\n"
-            "2. Facultativement, sélectionnez une ou plusieurs régions économiques dans le 'Menu déroulant des régions'.\n"
-            "3. Consultez la carte et les graphiques en barres pour analyser les perspectives d'emploi.\n"
-            "4. Cliquez sur une région dans la carte ou le graphique en barres pour voir les tendances d'emploi détaillées.\n"
-            "5. Utilisez le 'Menu déroulant des langues' pour passer des données en anglais aux données en français.\n\n"
-            "Pour plus d'informations, visitez le site Web de StatCAN."
-        )
-        close_button = "Fermer"
-        data_source = [
-            "Données fournies par le gouvernement du Canada. ",
-            html.Br(),
-            html.A("Visitez le site Web", href="https://www.statcan.gc.ca/fr/sujets/norme/cnp/2021/indexV1", target="_blank"),
-            html.Br(),
-            html.A("Données ouvertes Canada", href="https://ouvert.canada.ca/data/fr/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
-        ]
+    content = text_content()[language]
+    title = content['title']
+    info_header = "About This App" if language == 'English' else "À propos de cette application"
+    info_body = content['modal_info']
+    close_button = "Close" if language == 'English' else "Fermer"
+    data_source = [
+        content['data_source'],
+        html.Br(),
+        html.A(content['visit_website'], href=content['visit_website_link'], target="_blank"),
+        html.Br(),
+        html.A(content['open_data'], href=content['open_data_link'], target="_blank")
+    ]
     return title, info_header, info_body, close_button, data_source
 
 def update_plots(selected_noc, selected_regions, language):
