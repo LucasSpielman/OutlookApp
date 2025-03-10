@@ -15,40 +15,60 @@ file_paths = {
 cached_data = {}
 
 def load_data(language):
+    """
+    Load the data from the Excel file based on the selected language.
+    Cache the data to avoid reloading it multiple times.
+
+    Parameters:
+    language (str): The selected language ('English' or 'French').
+
+    Returns:
+    tuple: A tuple containing the sorted DataFrame, outlook order, and outlook colors.
+    """
+    # Check if data is already cached
     if language in cached_data:
         return cached_data[language]
     
+    # Read the Excel file
     df = pd.read_excel(file_paths[language])
     
+    # Define the outlook order and colors based on the language
     if language == 'English':
         outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', 'bazinga']
         outlook_colors = {
-            'very good': '#30AD23',
-            'good': '#1E90FF',
-            'moderate': '#FFD700',
-            'limited': '#F08315',
-            'undetermined': '#BA110C',
-            'bazinga': '#D3D3D3',
+            'very good': '#30AD23',  # Warm green
+            'good': '#1E90FF',  # Dodger Blue
+            'moderate': '#FFD700',  # Gold
+            'limited': '#F08315',  # Warm Orange
+            'undetermined': '#BA110C',  # Dark Red
+            'bazinga': '#D3D3D3',  # Light Grey
         }
-    else:
+    else:  # French
         outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', 'bazinga']
         outlook_colors = {
-            'très bonnes': '#30AD23',
-            'bonnes': '#1E90FF',
-            'modérées': '#FFD700',
-            'limitées': '#F08315',
-            'indéterminées': '#BA110C',
-            'bazinga': '#D3D3D3',
+            'très bonnes': '#30AD23',  # Warm Green
+            'bonnes': '#1E90FF',  # Dodger Blue
+            'modérées': '#FFD700',  # Gold
+            'limitées': '#F08315',  # Warm Orange
+            'indéterminées': '#BA110C',  # Dark Red
+            'bazinga': '#D3D3D3',  # Light Grey
         }
     
+    # Combine 'Economic Region Name' and 'Province' into a single column
     df['Economic Region Name'] = df.apply(lambda row: f"{row['Economic Region Name']}, {row['Province']}", axis=1)
+    
+    # Convert the 'Outlook' column to a categorical type with the defined order
     df['Outlook'] = pd.Categorical(df['Outlook'], categories=outlook_order, ordered=True)
+    
+    # Sort the DataFrame by 'NOC Title', 'Economic Region Name', and 'Outlook'
     sorted_df = df.sort_values(by=['NOC Title', 'Economic Region Name', 'Outlook'])
     
+    # Cache the data
     cached_data[language] = (sorted_df, outlook_order, outlook_colors)
+    
     return sorted_df, outlook_order, outlook_colors
 
-# Load the shapefile
+# Load the shapefile for geographical data
 gdf = gpd.read_file("./data/ler_000b16a_e.shp")
 gdf = gdf.to_crs(epsg=4326)  # Ensure the coordinate reference system is WGS84
 
@@ -61,8 +81,12 @@ gdf['centroid'] = gdf.geometry.centroid
 # Initialize the Dash app with the Minty theme
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 
+# Define the layout of the app
 app.layout = dbc.Container([
+    # Title row
     dbc.Row([dbc.Col(html.H1("Canadian Job Market Outlook 2024-2026", style={'textAlign': 'center'}), width=12)]),
+    
+    # Language dropdown row
     dbc.Row([
         dbc.Col(dcc.Dropdown(
             id='language-dropdown',
@@ -72,9 +96,13 @@ app.layout = dbc.Container([
             style={'width': '35%', 'margin': 'auto'}
         ), width=12)
     ]),
+    
+    # Region dropdown row
     dbc.Row([
         dbc.Col(dcc.Dropdown(id='region-dropdown', value=None, clearable=False, style={'width': '50%', 'margin': 'auto'}), width=12)
     ]),
+    
+    # Outlook dropdown row
     dbc.Row([
         dbc.Col(dcc.Dropdown(
             id='outlook-dropdown', 
@@ -84,9 +112,13 @@ app.layout = dbc.Container([
             style={'width': '50%', 'margin': 'auto'}
         ), width=12)
     ]),
+    
+    # Bar plot row
     dbc.Row([
         dbc.Col(dcc.Graph(id='bar-plot', style={'height': '50vh'}), width=12)
     ]),
+    
+    # Page slider row
     dbc.Row([
         dbc.Col(dcc.Slider(
             id='page-slider',
@@ -97,6 +129,8 @@ app.layout = dbc.Container([
             marks={1: '1'}
         ), width=12)
     ]),
+    
+    # Footer row
     dbc.Row([
         dbc.Col(html.Footer([
             html.P("Data sourced and provided by the Government of Canada."),
@@ -105,23 +139,51 @@ app.layout = dbc.Container([
     ])
 ], fluid=True)
 
+# Callback to update dropdown options based on selected language
 @app.callback(
     [Output('region-dropdown', 'options'), Output('region-dropdown', 'value'),
      Output('outlook-dropdown', 'options'), Output('outlook-dropdown', 'value')],
     Input('language-dropdown', 'value')
 )
 def update_dropdowns(language):
+    """
+    Update the region and outlook dropdown options based on the selected language.
+
+    Parameters:
+    language (str): The selected language ('English' or 'French').
+
+    Returns:
+    tuple: A tuple containing the dropdown options and default values.
+    """
     sorted_df, outlook_order, _ = load_data(language)
+    
+    # Create options for region dropdown
     region_options = [{'label': region, 'value': region} for region in sorted(sorted_df['Economic Region Name'].unique())]
+    
+    # Create options for outlook dropdown
     outlook_options = [{'label': outlook, 'value': outlook} for outlook in outlook_order]
 
-    return region_options, sorted_df['Economic Region Name'].iloc[0], outlook_options, outlook_order[:2]  # Default select first 2 outlooks
+    # Default select first region and first 2 outlooks
+    return region_options, sorted_df['Economic Region Name'].iloc[0], outlook_options, outlook_order[:2]
 
+# Callback to update bar plot and page slider based on selected inputs
 @app.callback(
     [Output('bar-plot', 'figure'), Output('page-slider', 'max'), Output('page-slider', 'marks')],
     [Input('region-dropdown', 'value'), Input('language-dropdown', 'value'), Input('outlook-dropdown', 'value'), Input('page-slider', 'value')]
 )
 def update_bar_plot(selected_region, language, selected_outlooks, page):
+    """
+    Update the bar plot and page slider based on the selected region, language, outlooks, and page.
+
+    Parameters:
+    selected_region (str): The selected economic region.
+    language (str): The selected language ('English' or 'French').
+    selected_outlooks (list): The selected outlook categories.
+    page (int): The current page number.
+
+    Returns:
+    tuple: A tuple containing the updated bar plot figure, maximum page number, and slider marks.
+    """
     sorted_df, outlook_order, outlook_colors = load_data(language)
     
     # Ensure selected_outlooks is a list
