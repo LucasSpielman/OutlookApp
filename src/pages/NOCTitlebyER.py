@@ -24,7 +24,7 @@ file_paths = {
 # Global storage for cached data to avoid reloading it multiple times
 cached_data = {}
 
-def load_data(language):
+def load_data1(language):
     """
     Load the data from the Excel file based on the selected language.
     Cache the data to avoid reloading it multiple times.
@@ -301,7 +301,7 @@ def update_dropdowns(language):
     Returns:
     tuple: A tuple containing the dropdown options and default values.
     """
-    merged_df, outlook_order, _ = load_data(language)
+    merged_df, outlook_order, _ = load_data1(language)
     
     # Create options for region dropdown
     region_options = [{'label': region, 'value': region} for region in sorted(merged_df['ERNAME'].unique())]
@@ -331,7 +331,7 @@ def update_plots(selected_region, language, selected_outlook, noc_title, page):
     Returns:
     tuple: A tuple containing the updated map and bar plot figures, maximum page number, and slider marks.
     """
-    merged_df, outlook_order, outlook_colors = load_data(language)
+    merged_df, outlook_order, outlook_colors = load_data1(language)
 
     # Ensure selected_outlook is a string
     if not selected_outlook:
@@ -441,7 +441,7 @@ def update_selected_noc_title(clickData):
 )
 def toggle_trends_modal(noc_title, n_clicks, is_open, language):
     if noc_title and not is_open:
-        merged_df, _, _ = load_data(language)
+        merged_df, _, _ = load_data1(language)
         trends_data = merged_df[merged_df['NOC Title'] == noc_title]['Employment Trends'].values[0]
         trends_body = dcc.Markdown(trends_data, dangerously_allow_html=True)
         return True, trends_body
