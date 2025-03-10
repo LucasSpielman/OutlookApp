@@ -137,7 +137,7 @@ app.layout = dbc.Container([
     # Info modal
     dbc.Modal([
         dbc.ModalHeader(id="info-modal-header"),
-        dbc.ModalBody(id="info-modal-body"),
+        dbc.ModalBody(dcc.Markdown(id="info-modal-body")),
         dbc.ModalFooter(
             dbc.Button(id="close-info-modal", className="ml-auto")
         )
@@ -184,13 +184,21 @@ def update_dropdowns(language):
     region_options = [{'label': 'All', 'value': 'All'}] + [{'label': region, 'value': region} for region in sorted(sorted_df['Economic Region Name'].unique())]
     if language == 'English':
         title = "Canadian Job Market Outlook 2024-2026"
-        info_header = "Information"
+        info_header = "About This App"
         info_body = (
-            "This dashboard provides an outlook on the Canadian job market for 2024-2026. \n"
-            "The map shows the geographical distribution of job outlooks across different regions. \n"
-            "The bar plot displays the outlook for various economic regions. \n"
-            "'Outlook' refers to the projected job market conditions, categorized as 'very good', 'good', 'moderate', 'limited', and 'undetermined'. \n"
-            "For more information, visit the StatCAN website. \n"
+            "This dashboard provides an outlook on the Canadian job market for 2024-2026. \n\n"
+            "### Features:\n"
+            "- **NOC Title Dropdown:** Select a National Occupational Classification (NOC) title to view its job outlook.\n"
+            "- **Region Dropdown:** Select one or more economic regions to filter the data.\n"
+            "- **Map Plot:** Displays the geographical distribution of job outlooks across selected regions.\n"
+            "- **Bar Plot:** Shows the job outlook for various economic regions.\n"
+            "- **Language Selection:** Switch between English and French data.\n\n"
+            "### How to Use:\n"
+            "1. Select a NOC title from the 'NOC Title Dropdown'.\n"
+            "2. Optionally, select one or more economic regions from the 'Region Dropdown'.\n"
+            "3. View the map and bar plots to analyze the job outlooks.\n"
+            "4. Click on a region in the map or bar plot to view detailed employment trends.\n"
+            "5. Use the 'Language Dropdown' to switch between English and French data.\n\n"
         )
         close_button = "Close"
         data_source = [
@@ -202,13 +210,22 @@ def update_dropdowns(language):
         ]
     else:
         title = "Perspectives du marché du travail canadien 2024-2026"
-        info_header = "Information"
+        info_header = "À propos de cette application"
         info_body = (
-            "Ce tableau de bord fournit des perspectives sur le marché du travail canadien pour 2024-2026. \n"
-            "La carte montre la répartition géographique des perspectives d'emploi dans différentes régions. \n"
-            "Le graphique à barres affiche les perspectives pour diverses régions économiques. \n"
-            "'Perspectives' fait référence aux conditions projetées du marché du travail, classées comme 'très bonnes', 'bonnes', 'modérées', 'limitées' et 'indéterminées'. \n"
-            "Pour plus d'informations, visitez le site Web de StatCAN. \n"
+            "Ce tableau de bord fournit des perspectives sur le marché du travail canadien pour 2024-2026. \n\n"
+            "### Caractéristiques:\n"
+            "- **Menu déroulant des titres NOC:** Sélectionnez un titre de Classification nationale des professions (CNP) pour voir ses perspectives d'emploi.\n"
+            "- **Menu déroulant des régions:** Sélectionnez une ou plusieurs régions économiques pour filtrer les données.\n"
+            "- **Carte:** Affiche la répartition géographique des perspectives d'emploi dans les régions sélectionnées.\n"
+            "- **Graphique en barres:** Affiche les perspectives d'emploi pour diverses régions économiques.\n"
+            "- **Sélection de la langue:** Passez des données en anglais aux données en français.\n\n"
+            "### Comment utiliser:\n"
+            "1. Sélectionnez un titre NOC dans le 'Menu déroulant des titres NOC'.\n"
+            "2. Facultativement, sélectionnez une ou plusieurs régions économiques dans le 'Menu déroulant des régions'.\n"
+            "3. Consultez la carte et les graphiques en barres pour analyser les perspectives d'emploi.\n"
+            "4. Cliquez sur une région dans la carte ou le graphique en barres pour voir les tendances d'emploi détaillées.\n"
+            "5. Utilisez le 'Menu déroulant des langues' pour passer des données en anglais aux données en français.\n\n"
+            "Pour plus d'informations, visitez le site Web de StatCAN."
         )
         close_button = "Fermer"
         data_source = [

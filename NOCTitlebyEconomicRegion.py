@@ -46,22 +46,22 @@ def load_data(language):
     if language == 'English':
         outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', 'None']
         outlook_colors = {
-            'very good': '#30AD23',  # Warm green
-            'good': '#1E90FF',  # Dodger Blue
-            'moderate': '#FFD700',  # Gold
-            'limited': '#F08315',  # Warm Orange
-            'undetermined': '#BA110C',  # Dark Red
-            'None': '#D3D3D3',  # Light Grey
+            'very good': {'color': '#30AD23', 'text': 'white'},  # Warm green
+            'good': {'color': '#1E90FF', 'text': 'white'},  # Dodger Blue
+            'moderate': {'color': '#FFD700', 'text': 'black'},  # Gold
+            'limited': {'color': '#F08315', 'text': 'black'},  # Warm Orange
+            'undetermined': {'color': '#BA110C', 'text': 'white'},  # Dark Red
+            'None': {'color': '#D3D3D3', 'text': 'black'},  # Light Grey
         }
     else:  # French
         outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', 'None']
         outlook_colors = {
-            'très bonnes': '#30AD23',  # Warm Green
-            'bonnes': '#1E90FF',  # Dodger Blue
-            'modérées': '#FFD700',  # Gold
-            'limitées': '#F08315',  # Warm Orange
-            'indéterminées': '#BA110C',  # Dark Red
-            'None': '#D3D3D3',  # Light Grey
+            'très bonnes': {'color': '#30AD23', 'text': 'white'},  # Warm Green
+            'bonnes': {'color': '#1E90FF', 'text': 'white'},  # Dodger Blue
+            'modérées': {'color': '#FFD700', 'text': 'black'},  # Gold
+            'limitées': {'color': '#F08315', 'text': 'black'},  # Warm Orange
+            'indéterminées': {'color': '#BA110C', 'text': 'white'},  # Dark Red
+            'None': {'color': '#D3D3D3', 'text': 'black'},  # Light Grey
         }
 
     # Extract the first part of 'Economic Region Name' before the comma
@@ -371,10 +371,14 @@ def update_plots(selected_region, language, selected_outlook, noc_title, page):
         x='NOC Title',
         y='Outlook',
         color='Outlook',
-        color_discrete_map=outlook_colors,
+        color_discrete_map={k: v['color'] for k, v in outlook_colors.items()},
         category_orders={'Outlook': outlook_order},
         hover_data={'NOC Title': True}  # Ensure full text is shown on hover
     )
+
+    # Update text color for bars
+    for data in bar_fig.data:
+        data.textfont = dict(color=[outlook_colors[outlook]['text'] for outlook in data.y])
 
     # Force the y-axis to display all categories even if there is no data for some
     bar_fig.update_yaxes(
