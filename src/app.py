@@ -1,38 +1,45 @@
-# app.py
 import dash
-from dash import dcc, html
-from NOCTitlebyER import app as NOC_app  # Import NOC_app
-from NOCTitlebyER import load_data as NOC_load_data  # Import NOC_load_data
-from ERbyNOCTitle import app as ER_app # Import ER_app
-from ERbyNOCTitle import load_data as ER_load_data  # Import ER_load_data
-import geopandas as gpd
+from dash import html, dcc, Input, Output
+import dash_bootstrap_components as dbc
 
-# Load the shapefile for geographical data
-gdf_1 = gpd.read_file("./data/ler_000b16a_e.shp")
-gdf_1 = gdf_1.to_crs(epsg=4326)  # Ensure the coordinate reference system is WGS84
+# Import your two existing Dash app layouts and callbacks
+from ERbyNOCTitle import create_layout as create_layout1
+from ERbyNOCTitle import register_callbacks as register_callbacks1
 
-# Simplify geometries to improve performance
-gdf_1['geometry'] = gdf_1['geometry'].simplify(tolerance=0.01, preserve_topology=True)
+from NOCTitlebyER import create_layout as create_layout2
+from NOCTitlebyER import register_callbacks as register_callbacks2
 
-# Calculate centroids for each region
-gdf_1['centroid'] = gdf_1.geometry.centroid
+# Initialize the main Dash app with the Minty theme
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY], suppress_callback_exceptions=True)
+app.title = 'Combined Dash App'
 
-# Load the Excel file paths for English and French data
+# Cache the layouts
+cached_layouts = {
+    'tab1': create_layout1(),
+    'tab2': create_layout2()
+}
 
-# Global storage for cached data to avoid reloading it multiple times
-cached_data_1 = {}
-
-# Create your main Dash app
-app = dash.Dash(__name__)
-
-# Define the layout with Tabs
+# Define the layout with tabs
 app.layout = html.Div([
-    dcc.Tabs([
-        dcc.Tab(label='Dashboard 1', children=[NOC_app.layout]),  # Use the layout from NOC_app
-        dcc.Tab(label='Dashboard 2', children=[ER_app.layout])    # Use the layout from ER_app
-    ])
+    dcc.Tabs(id='tabs', value='tab1', children=[
+        dcc.Tab(label='Canadian Job Market Outlook', value='tab1'),
+        dcc.Tab(label='Canadian Economic Region Outlook', value='tab2')
+    ]),
+    html.Div(id='tabs-content')
 ])
 
-# Run the app
+# Define the callback to switch tabs
+@app.callback(
+    Output('tabs-content', 'children'),
+    Input('tabs', 'value')
+)
+def render_content(tab):
+    return cached_layouts[tab]
+
+# Register callbacks for each app
+register_callbacks1(app)
+register_callbacks2(app)
+
+# Run the server
 if __name__ == '__main__':
     app.run_server(debug=True)

@@ -6,26 +6,26 @@ import pandas as pd
 import geopandas as gpd
 
 # Load the Excel file paths
-file_paths = {
+FILE_PATHS = {
     'English': "./data/20242026_outlook_n21_en_250117.xlsx",
     'French': "./data/20242026_outlook_n21_fr_250117.xlsx"
 }
 
-# Global storage for cached data
-cached_data = {}
+GEOJSON_PATH = "./data/ler_000b16a_e.shp"
+CACHED_DATA = {}
 
 def load_data(language):
-    if language in cached_data:
-        return cached_data[language]
+    if language in CACHED_DATA:
+        return CACHED_DATA[language]
     
-    df = pd.read_excel(file_paths[language])
+    df = pd.read_excel(FILE_PATHS[language])
     
     outlook_order, outlook_colors = get_outlook_config(language)
     
     df['Outlook'] = pd.Categorical(df['Outlook'], categories=outlook_order, ordered=True)
     sorted_df = df.sort_values(by=['NOC Title', 'Economic Region Name', 'Outlook'])
     
-    cached_data[language] = (sorted_df, outlook_order, outlook_colors)
+    CACHED_DATA[language] = (sorted_df, outlook_order, outlook_colors)
     
     return sorted_df, outlook_order, outlook_colors
 
@@ -53,7 +53,7 @@ def get_outlook_config(language):
     return outlook_order, outlook_colors
 
 def load_geodata():
-    gdf = gpd.read_file("./data/ler_000b16a_e.shp")
+    gdf = gpd.read_file(GEOJSON_PATH)
     gdf = gdf.to_crs(epsg=4326)
     gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
     gdf['centroid'] = gdf.geometry.centroid
@@ -282,33 +282,39 @@ def display_trends_modal(map_click, bar_click, close_click, is_open, language):
     return True, employment_trends
 
 # Initialize the Dash app with the Minty theme
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
-app.layout = create_layout()
+# app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
+# layout = create_layout()  # Assign the layout to a variable
 
-# Callbacks
-app.callback(
-    Output("info-modal", "is_open"),
-    [Input("open-info-modal", "n_clicks"), Input("close-info-modal", "n_clicks")],
-    [State("info-modal", "is_open")]
-)(toggle_info_modal)
+def register_callbacks(app):
+    app.callback(
+        Output("info-modal", "is_open"),
+        [Input("open-info-modal", "n_clicks"), Input("close-info-modal", "n_clicks")],
+        [State("info-modal", "is_open")]
+    )(toggle_info_modal)
 
-app.callback(
-    [Output('noc-dropdown', 'options'), Output('noc-dropdown', 'value'), Output('region-dropdown', 'options'), Output('dashboard-title', 'children'), Output('info-modal-header', 'children'), Output('info-modal-body', 'children'), Output('close-info-modal', 'children'), Output('data-source', 'children')],
-    Input('language-dropdown', 'value')
-)(update_dropdowns)
+    app.callback(
+        [Output('noc-dropdown', 'options'), Output('noc-dropdown', 'value'), Output('region-dropdown', 'options'), Output('dashboard-title', 'children'), Output('info-modal-header', 'children'), Output('info-modal-body', 'children'), Output('close-info-modal', 'children'), Output('data-source', 'children')],
+        Input('language-dropdown', 'value')
+    )(update_dropdowns)
 
-app.callback(
-    [Output('map-plot', 'figure'), Output('bar-plot', 'figure')],
-    [Input('noc-dropdown', 'value'), Input('region-dropdown', 'value'), Input('language-dropdown', 'value')]
-)(update_plots)
+    app.callback(
+        [Output('map-plot', 'figure'), Output('bar-plot', 'figure')],
+        [Input('noc-dropdown', 'value'), Input('region-dropdown', 'value'), Input('language-dropdown', 'value')]
+    )(update_plots)
 
-app.callback(
-    Output("trends-modal", "is_open"),
-    Output("employment-trends-body", "children"),
-    [Input("map-plot", "clickData"), Input("bar-plot", "clickData"), Input("close-trends-modal", "n_clicks")],
-    [State("trends-modal", "is_open"), State("language-dropdown", "value")]
-)(display_trends_modal)
+    app.callback(
+        Output("trends-modal", "is_open"),
+        Output("employment-trends-body", "children"),
+        [Input("map-plot", "clickData"), Input("bar-plot", "clickData"), Input("close-trends-modal", "n_clicks")],
+        [State("trends-modal", "is_open"), State("language-dropdown", "value")]
+    )(display_trends_modal)
+
+def init_app():
+    app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
+    app.layout = create_layout()
+    register_callbacks(app)
+    return app
 
 # Run the app
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    init_app().run_server(debug=True)

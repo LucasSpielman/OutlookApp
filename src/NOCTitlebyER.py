@@ -19,7 +19,9 @@ def load_geographical_data():
     gdf = gpd.read_file(GEOJSON_PATH)
     gdf = gdf.to_crs(epsg=4326)
     gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
-    gdf['centroid'] = gdf.geometry.centroid
+    gdf = gdf.to_crs(epsg=3857)  # Re-project to a projected CRS
+    gdf['centroid'] = gdf['geometry'].centroid
+    gdf = gdf.to_crs(epsg=4326)  # Convert back to geographic CRS
     return gdf
 
 GDF = load_geographical_data()
