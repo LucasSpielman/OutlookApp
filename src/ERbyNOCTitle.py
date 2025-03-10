@@ -5,16 +5,6 @@ import plotly.express as px
 import pandas as pd
 import geopandas as gpd
 
-# Load the shapefile
-gdf = gpd.read_file("./data/ler_000b16a_e.shp")
-gdf = gdf.to_crs(epsg=4326)  # Ensure the coordinate reference system is WGS84
-
-# Simplify geometries to improve performance
-gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
-
-# Calculate centroids for each region
-gdf['centroid'] = gdf.geometry.centroid
-
 # Load the Excel file paths
 file_paths = {
     'English': "./data/20242026_outlook_n21_en_250117.xlsx",
@@ -43,24 +33,24 @@ def load_data(language):
     
     # Define the outlook order and colors based on the language
     if language == 'English':
-        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', 'None']
+        outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', ' ']
         outlook_colors = {
-            'very good': {'color': '#30AD23', 'text': 'white'},  # Warm green
-            'good': {'color': '#1E90FF', 'text': 'white'},  # Dodger Blue
-            'moderate': {'color': '#FFD700', 'text': 'black'},  # Gold
-            'limited': {'color': '#F08315', 'text': 'black'},  # Warm Orange
-            'undetermined': {'color': '#BA110C', 'text': 'white'},  # Dark Red
-            'None': {'color': '#D3D3D3', 'text': 'black'},  # Light Grey
+            'very good': '#30AD23',  # Warm green 
+            'good': '#1E90FF',  # Dodger Blue
+            'moderate': '#FFD700',  # Gold
+            'limited': '#F08315',  # Warm Orange
+            'undetermined': '#BA110C',  # Dark Red
+            ' ': '#D3D3D3',  # Light Grey
         }
     else:  # French
-        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', 'None']
+        outlook_order = ['très bonnes', 'bonnes', 'modérées', 'limitées', 'indéterminées', ' ']
         outlook_colors = {
-            'très bonnes': {'color': '#30AD23', 'text': 'white'},  # Warm Green
-            'bonnes': {'color': '#1E90FF', 'text': 'white'},  # Dodger Blue
-            'modérées': {'color': '#FFD700', 'text': 'black'},  # Gold
-            'limitées': {'color': '#F08315', 'text': 'black'},  # Warm Orange
-            'indéterminées': {'color': '#BA110C', 'text': 'white'},  # Dark Red
-            'None': {'color': '#D3D3D3', 'text': 'black'},  # Light Grey
+            'très bonnes': '#30AD23',  # Warm Green
+            'bonnes': '#1E90FF',  # Dodger Blue
+            'modérées': '#FFD700',  # Gold
+            'limitées': '#F08315',  # Warm Orange
+            'indéterminées': '#BA110C',  # Dark Red
+            ' ': '#D3D3D3',  # Light Grey
         }
     
     # Convert the 'Outlook' column to a categorical type with the defined order
@@ -74,6 +64,15 @@ def load_data(language):
     
     return sorted_df, outlook_order, outlook_colors
 
+# Load the shapefile
+gdf = gpd.read_file("./data/ler_000b16a_e.shp")
+gdf = gdf.to_crs(epsg=4326)  # Ensure the coordinate reference system is WGS84
+
+# Simplify geometries to improve performance
+gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
+
+# Calculate centroids for each region
+gdf['centroid'] = gdf.geometry.centroid
 
 # Initialize the Dash app with the Minty theme
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
