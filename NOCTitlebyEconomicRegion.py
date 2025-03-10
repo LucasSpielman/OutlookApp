@@ -83,7 +83,10 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 # Define the layout of the app
 app.layout = dbc.Container([
     # Title row
-    dbc.Row([dbc.Col(html.H1("Canadian Job Market Outlook 2024-2026", style={'textAlign': 'Left'}), width=12)]),
+    dbc.Row([
+        dbc.Col(html.H1("Canadian Job Market Outlook 2024-2026", style={'textAlign': 'Left'}), width=10),
+        dbc.Col(dbc.Button("Info", id="open-modal", color="primary"), width=2, style={'textAlign': 'right'})
+    ]),
     
     # Region dropdown row
     dbc.Row([
@@ -92,7 +95,7 @@ app.layout = dbc.Container([
             value=None, 
             clearable=False, 
             style={'width': '100%', 'margin': 'left'}
-        ), width=6)
+        ), width=3)  # Adjust the width to 4
     ], justify='start'),
     
     # Map plot row
@@ -107,7 +110,7 @@ app.layout = dbc.Container([
             type='text',
             placeholder='Search for Job Title...',
             style={'width': '100%', 'margin': 'auto'}
-        ), width=6)
+        ), width=3)
     ], justify='start'),
     
     # Outlook dropdown row
@@ -118,7 +121,7 @@ app.layout = dbc.Container([
             multi=False,  # Allow only one selection
             clearable=False, 
             style={'width': '100%', 'margin': 'left'}
-        ), width=6)
+        ), width=3)
     ]),
     
     # Bar plot row
@@ -142,7 +145,8 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col(html.Div([
             html.P("Data sourced and provided by the Government of Canada."),
-            html.A("Visit the website", href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank")
+            html.A("Visit the website", href="https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1", target="_blank"),
+            html.A("Open Canada Data", href="https://open.canada.ca/data/en/dataset/b0e112e9-cf53-4e79-8838-23cd98debe5b?_gl=1*h2x1ic*_ga*MTc4Mjg5MzYwMi4xNjc4MTQ5Mjc1*_ga_S9JG8CZVYZ*MTczNDM4ODMyOC4xMi4xLjE3MzQzODg2OTUuNDkuMC4w", target="_blank")
         ], style={'text-align': 'center', 'margin-top': '20px'}), width=12)
     ]),
     
@@ -155,12 +159,11 @@ app.layout = dbc.Container([
             value='English',
             clearable=False,
             style={'width': '100%'}
-        ), width=2)
+        ), width=1)
     ]),
     
     # Modal button and modal page
     dbc.Row([
-        dbc.Col(dbc.Button("Info", id="open-modal", color="primary"), width=2),
         dbc.Modal(
             [
                 dbc.ModalHeader(dbc.ModalTitle("About This App")),
@@ -323,7 +326,7 @@ def update_plots(selected_region, language, selected_outlook, noc_title, page):
             font_size=16,  # Larger hover text
             font_family="Arial"
         ),
-        xaxis_tickangle=0,  # Rotate labels to avoid overlap
+        xaxis_tickangle=-5,  # Rotate labels to avoid overlap
         xaxis=dict(
             title_font=dict(size=18),  # Increase x-axis title font size
             tickfont=dict(size=14)  # Increase x-axis tick font size
