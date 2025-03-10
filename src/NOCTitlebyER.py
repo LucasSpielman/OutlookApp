@@ -354,9 +354,6 @@ def update_plots(selected_region, language, selected_outlook, noc_title, page):
     end_idx = start_idx + items_per_page
     paginated_data = filtered_data.iloc[start_idx:end_idx]
 
-    # Truncate NOC Title to 38 characters
-    # paginated_data['NOC Title'] = paginated_data['NOC Title'].apply(lambda x: x if len(x) <= 38 else x[:35] + '...')
-
     # Create the map plot
     map_fig = px.choropleth_mapbox(
         filtered_gdf_1, geojson=filtered_gdf_1.geometry, locations=filtered_gdf_1.index, color="ERNAME",
