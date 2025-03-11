@@ -10,6 +10,8 @@ This is a Dash web application that displays economic region outlook data for Ca
 
 ![Job Outlook](Job_Market_Outlook.png "Job Market Outlook") ![ER Outlook](Economic_Region_Outlook.png "ER Outlook") 
 
+<img src="Job_Market_Outlook.png" width=250> <img src="Economic_Region_Outlook.png" width=250>
+
 ## Features
 - Select language (English or French)
 - Choose an economic region from a dropdown menu
