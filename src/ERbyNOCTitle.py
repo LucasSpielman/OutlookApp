@@ -15,6 +15,17 @@ FILE_PATHS = {
 GEOJSON_PATH = "./data/ler_000b16a_e.shp"
 CACHED_DATA = {}
 
+# Load geographical data
+def load_geographical_data():
+    gdf = gpd.read_file(GEOJSON_PATH)
+    gdf = gdf.to_crs(epsg=4326)
+    gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
+    gdf['centroid'] = gdf.geometry.centroid
+    return gdf
+
+GDF = load_geographical_data()
+
+# Load data based on language
 def load_data(language):
     if language in CACHED_DATA:
         return CACHED_DATA[language]
@@ -26,6 +37,7 @@ def load_data(language):
     CACHED_DATA[language] = (sorted_df, outlook_order, outlook_colors)
     return sorted_df, outlook_order, outlook_colors
 
+# Get outlook configuration based on language
 def get_outlook_config(language):
     if language == 'English':
         outlook_order = ['very good', 'good', 'moderate', 'limited', 'undetermined', 'None']
@@ -48,15 +60,6 @@ def get_outlook_config(language):
             'None': '#D3D3D3',
         }
     return outlook_order, outlook_colors
-
-def load_geodata():
-    gdf = gpd.read_file(GEOJSON_PATH)
-    gdf = gdf.to_crs(epsg=4326)
-    gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
-    gdf['centroid'] = gdf.geometry.centroid
-    return gdf
-
-GDF = load_geodata()
 
 def create_title_row():
     return dbc.Row([

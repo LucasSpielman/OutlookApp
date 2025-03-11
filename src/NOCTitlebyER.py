@@ -11,6 +11,7 @@ FILE_PATHS = {
     'English': "./data/20242026_outlook_n21_en_250117.xlsx",
     'French': "./data/20242026_outlook_n21_fr_250117.xlsx"
 }
+
 GEOJSON_PATH = "./data/ler_000b16a_e.shp"
 CACHED_DATA = {}
 
@@ -19,9 +20,7 @@ def load_geographical_data():
     gdf = gpd.read_file(GEOJSON_PATH)
     gdf = gdf.to_crs(epsg=4326)
     gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.01, preserve_topology=True)
-    gdf = gdf.to_crs(epsg=3857)  # Re-project to a projected CRS
-    gdf['centroid'] = gdf['geometry'].centroid
-    gdf = gdf.to_crs(epsg=4326)  # Convert back to geographic CRS
+    gdf['centroid'] = gdf.geometry.centroid
     return gdf
 
 GDF = load_geographical_data()
