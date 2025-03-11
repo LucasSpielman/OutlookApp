@@ -8,9 +8,9 @@ My next idea was to visualize career outlooks on a map. I envisioned an interact
 
 This is a Dash web application that displays economic region outlook data for Canada. The app allows you to select a language (English or French), choose a specific city or economic region, and search for specific NOC Titles (job titles). It includes detailed views of employment trends for the selected NOC Title and economic region. The app combines two dashboards: one for viewing job market outlook by NOC Title and another for viewing economic region outlook.
 
-![Job Outlook](Job_Market_Outlook.png "Job Market Outlook") ![ER Outlook](Economic_Region_Outlook.png "ER Outlook") 
 
-<img src="Job_Market_Outlook.png" width=250> <img src="Economic_Region_Outlook.png" width=250>
+
+<img src="Job_Market_Outlook.png" width=500> <img src="Economic_Region_Outlook.png" width=500>
 
 ## Features
 - Select language (English or French)
