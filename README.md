@@ -52,7 +52,7 @@ python src/JobOutlookApp.py
 ## Data
 The data used in this app is sourced and provided by the Government of Canada. You can visit their website for more information:
 
-Government of Canada - National Occupational Classification (NOC) - https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1
+[Government of Canada - National Occupational Classification (NOC)](https://www.statcan.gc.ca/en/subjects/standard/noc/2021/indexV1)
 
 ## Screenshots
 
