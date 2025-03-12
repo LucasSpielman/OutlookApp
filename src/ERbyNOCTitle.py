@@ -100,11 +100,6 @@ def create_bar_plot_row():
         dbc.Col(dcc.Graph(id='bar-plot', style={'height': '20vh'}), width=12)
     ], style={'margin-left': '0', 'margin-right': '0'})
 
-def create_data_source_row():
-    return dbc.Row([
-        dbc.Col(html.P(id='data-source', style={'text-align': 'center', 'margin-top': '20px'}), width=12, style={'position': 'absolute', 'bottom': '20px', 'width': '100%'})
-    ], style={'margin-left': '0', 'margin-right': '0'})
-
 def create_language_dropdown_row():
     return dbc.Row([
         dbc.Col(dcc.Dropdown(
@@ -147,7 +142,6 @@ def create_layout():
         create_map_plot_row(),
         create_region_dropdown_row(),
         create_bar_plot_row(),
-        # create_data_source_row(),
         create_language_dropdown_row(),
         create_info_modal(),
         create_trends_modal()
@@ -157,8 +151,8 @@ def update_dropdowns(language):
     sorted_df, _, _ = load_data(language)
     noc_options = [{'label': title, 'value': title} for title in sorted(sorted_df['NOC Title'].unique())]
     region_options = [{'label': 'All', 'value': 'All'}] + [{'label': region, 'value': region} for region in sorted(sorted_df['Economic Region Name'].unique())]
-    title, info_header, info_body, close_button, data_source = get_language_content(language)
-    return noc_options, sorted_df['NOC Title'].iloc[0], region_options, title, info_header, info_body, close_button, data_source
+    title, info_header, info_body, close_button = get_language_content(language)
+    return noc_options, sorted_df['NOC Title'].iloc[0], region_options, title, info_header, info_body, close_button
 
 def text_content():
     return text_content_er()
@@ -169,14 +163,7 @@ def get_language_content(language):
     info_header = "About This App" if language == 'English' else "À propos de cette application"
     info_body = content['modal_info']
     close_button = "Close" if language == 'English' else "Fermer"
-    data_source = [
-        content['data_source'],
-        html.Br(),
-        html.A(content['visit_website'], href=content['visit_website_link'], target="_blank"),
-        html.Br(),
-        html.A(content['open_data'], href=content['open_data_link'], target="_blank")
-    ]
-    return title, info_header, info_body, close_button, data_source
+    return title, info_header, info_body, close_button
 
 def update_plots(selected_noc, selected_regions, language):
     sorted_df, outlook_order, outlook_colors = load_data(language)
@@ -256,7 +243,7 @@ def register_callbacks(app):
     )(toggle_info_modal)
 
     app.callback(
-        [Output('noc-dropdown', 'options'), Output('noc-dropdown', 'value'), Output('region-dropdown', 'options'), Output('dashboard-title', 'children'), Output('info-modal-header', 'children'), Output('info-modal-body', 'children'), Output('close-info-modal', 'children'), Output('data-source', 'children')],
+        [Output('noc-dropdown', 'options'), Output('noc-dropdown', 'value'), Output('region-dropdown', 'options'), Output('dashboard-title', 'children'), Output('info-modal-header', 'children'), Output('info-modal-body', 'children'), Output('close-info-modal', 'children')],
         Input('language-dropdown', 'value')
     )(update_dropdowns)
 
